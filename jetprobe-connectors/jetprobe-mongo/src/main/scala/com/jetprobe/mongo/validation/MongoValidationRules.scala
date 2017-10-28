@@ -1,7 +1,8 @@
 package com.jetprobe.mongo.validation
 
+import com.jetprobe.core.parser.Expr
 import com.jetprobe.core.validations.ValidationRule.ActualResolver
-import com.jetprobe.core.validations.{ValidationRule, ValidationRuleBuilder}
+import com.jetprobe.core.validations.ValidationRule
 import com.jetprobe.mongo.models._
 import com.jetprobe.mongo.sink.MongoSink
 import sourcecode.{FullName, Line}
@@ -22,7 +23,7 @@ case class ServerStatsRule[U <: Any](expected: U, actual: (ServerStats) => U, da
 
 }
 
-case class DBStatsRule[U <: Any](expected: U, actual: (DBStats) => U, database: String = "test",
+case class DBStatsRule[U <: Any](expected: U, actual: (DBStats) => U, database: Expr = Expr("admin"),
                                  fullName: FullName, line: Line)
   extends ValidationRule[MongoSink] {
 
@@ -32,7 +33,8 @@ case class DBStatsRule[U <: Any](expected: U, actual: (DBStats) => U, database: 
 
 }
 
-case class DatabaseListRule[U <: Any](expected: U, actual: (DatabaseList) => U, database: String = "test")(implicit val fullName: FullName, val line: Line)
+case class DatabaseListRule[U <: Any](expected: U, actual: (DatabaseList) => U, database: Expr = Expr("admin"))
+                                     (implicit val fullName: FullName, val line: Line)
   extends ValidationRule[MongoSink] {
 
   override def name: String = s"Database Lists validation"
@@ -43,8 +45,8 @@ case class DatabaseListRule[U <: Any](expected: U, actual: (DatabaseList) => U, 
 
 case class CollectionStatsRule[U <: Any](expected: U,
                                          actual: ActualResolver[CollectionStats],
-                                         db: String = "",
-                                         collection: String = "",
+                                         db: Expr = Expr(),
+                                         collection: Expr = Expr(),
                                          fullName: FullName,
                                          line: Line)
   extends ValidationRule[MongoSink] {
@@ -57,9 +59,9 @@ case class CollectionStatsRule[U <: Any](expected: U,
 
 case class DocumentsRule[U](expected: U,
                             actual: (SourceBsonDocuments[String]) => U,
-                            db: String = "",
-                            collection: String = "",
-                            query: String = "",
+                            db: Expr = Expr(),
+                            collection: Expr = Expr(),
+                            query: Expr = Expr(),
                             fullName: FullName,
                             line: Line)
   extends ValidationRule[MongoSink] {

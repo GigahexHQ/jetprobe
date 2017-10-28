@@ -10,7 +10,6 @@ trait ValidationRule[D] {
 
   val expected : Any
 
-  //type ActualResolver[T] = T => Any
 
   val actual : ActualResolver[_]
 

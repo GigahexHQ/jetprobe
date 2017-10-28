@@ -29,7 +29,7 @@ class Controller extends BaseActor with LazyLogging {
       total = scenarios.size
       logger.info(s"total test scenarios : ${total}")
       scenarios.foreach(scn => {
-        val session = Session(scn.name,scn.className)
+        val session = Session(scn.name,scn.className,attributes = scn.configAttr)
         logger.info(s"Starting the session : ${scn.name}")
         scn.entry ! session
       })

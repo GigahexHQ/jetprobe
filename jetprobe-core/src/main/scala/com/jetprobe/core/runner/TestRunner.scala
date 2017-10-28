@@ -10,6 +10,7 @@ import java.util.zip.ZipInputStream
 
 import akka.actor.ActorSystem
 import com.jetprobe.core.TestScenario
+import com.jetprobe.core.common.ConfigReader
 import com.jetprobe.core.runner.TestRunner.executeTests
 import com.jetprobe.core.structure.ExecutableScenario
 import com.typesafe.scalalogging.LazyLogging
@@ -25,7 +26,7 @@ object TestRunner extends LazyLogging {
 
     val parsedConfig = CmdConfig.parser.parse(args, CmdConfig())
     parsedConfig match {
-      case Some(conf) => extractAndRun(conf.testableJar.getAbsolutePath)
+      case Some(conf) => extractAndRun(conf.testableJar.getAbsolutePath,conf.configFile)
       case None =>
         logger.info("Unable to parse the arguments")
         System.exit(1)
@@ -35,7 +36,7 @@ object TestRunner extends LazyLogging {
   }
 
 
-  def extractAndRun(jarPath: String): Unit = {
+  def extractAndRun(jarPath: String, configFile : Option[File]): Unit = {
     val classNames = new util.ArrayList[String]
     val zip = new ZipInputStream(new FileInputStream(jarPath))
     var entry = zip.getNextEntry
@@ -50,11 +51,11 @@ object TestRunner extends LazyLogging {
       entry = zip.getNextEntry
     }
 
-    executeTests(jarPath, classNames)
+    executeTests(jarPath, classNames,configFile)
 
   }
 
-  def executeTests(jarPath: String, classNames: util.ArrayList[String]): Unit = {
+  def executeTests(jarPath: String, classNames: util.ArrayList[String],configFile : Option[File]): Unit = {
     val classURL = new File(jarPath).toURI.toURL
     val classLoader = new URLClassLoader(Array(classURL), Thread.currentThread().getContextClassLoader())
 
@@ -75,7 +76,11 @@ object TestRunner extends LazyLogging {
           val m = testBuilder.getDeclaredMethod("buildScenario")
           m.setAccessible(true)
           val result = m.invoke(t).asInstanceOf[ExecutableScenario]
-          scenarios.+=(result.copy(className = csName))
+          configFile match {
+            case Some(conf) => scenarios.+=(result.copy(className = csName,config = ConfigReader.fromYAML(conf)))
+            case None => scenarios.+=(result.copy(className = csName))
+          }
+
         }
       }
     })

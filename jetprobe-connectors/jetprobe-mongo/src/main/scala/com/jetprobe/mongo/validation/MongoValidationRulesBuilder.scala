@@ -1,5 +1,6 @@
 package com.jetprobe.mongo.validation
 
+import com.jetprobe.core.parser.Expr
 import com.jetprobe.core.validations.{ValidationRule, ValidationRulesBuilder}
 import com.jetprobe.mongo.sink.MongoSink
 
@@ -25,24 +26,24 @@ class MongoValidationRulesBuilder(mongoSink: MongoSink) extends ValidationRulesB
 
   def forDatabase(db: String, ruleBuilders: DBStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
     val rbs = ruleBuilders.map {
-      case rb: DBStatsRule[_] => rb.copy(database = db)
+      case rb: DBStatsRule[_] => rb.copy(database = Expr(db))
     }
     addAll(rbs)
   }
 
-  def forDatabaseAndCollection(database: String, coll: String, ruleBuilders: CollectionStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
+  def forDatabaseAndCollection(database: String, collection: String, ruleBuilders: CollectionStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
 
     val ruleDBAndColls = ruleBuilders.map {
-      case rb: CollectionStatsRule[_] => rb.copy(db = database, collection = coll)
+      case rb: CollectionStatsRule[_] => rb.copy(db = Expr(database), collection = Expr(collection))
     }
     addAll(ruleDBAndColls)
   }
 
-  def forDatabaseAndCollection(database: String, coll: String, ruleBuilders: DocumentsRule[_]*)
+  def forDatabaseAndCollection(database: String, collection: String, ruleBuilders: DocumentsRule[_]*)
                               (implicit d: DummyImplicit): Seq[ValidationRule[MongoSink]] = {
 
     val ruleDBAndColls = ruleBuilders.map {
-      case rb: DocumentsRule[_] => rb.copy(db = database, collection = coll)
+      case rb: DocumentsRule[_] => rb.copy(db = Expr(database), collection = Expr(collection))
     }
     addAll(ruleDBAndColls)
   }

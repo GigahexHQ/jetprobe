@@ -5,4 +5,4 @@ import com.jetprobe.core.action.Action
 /**
   * @author Shad.
   */
-case class Scenario(name : String, entry : Action, ctx : ScenarioContext, className : String)
+case class Scenario(name : String, entry : Action, ctx : ScenarioContext, className : String, configAttr : Map[String,Any])

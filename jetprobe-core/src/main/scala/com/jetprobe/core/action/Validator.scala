@@ -12,9 +12,8 @@ class Validator[D <: DataSource](rulesBuilder: Seq[ValidationRule[D]], runner: V
   override def receive: Receive = {
     case FeedMessage(session, next) =>
       //println(s"executing the validations ${rulesBuilder.build.size}")
-      val updatedSession = session.copy(validationResuls = runner.execute(rulesBuilder,sink) ++ session.validationResuls)
+      val updatedSession = session.copy(validationResuls = runner.execute(rulesBuilder,sink,session.attributes) ++ session.validationResuls)
 
-      //updatedSession.validationResuls.foreach(println)
       next ! updatedSession
   }
 }

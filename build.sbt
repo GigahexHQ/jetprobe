@@ -1,10 +1,20 @@
 import BuildSettings.basicSettings
 import Dependencies._
 
+mainClass in Compile := Some("com.jetprobe.core.runner.TestRunner")
+
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
+sonatypeProfileName := "com.jetprobe"
 
 lazy val root = Project("jetprobe", file("."))
   .dependsOn(Seq(commons, core,rabbitConnector,mongoConnector).map(_ % "compile->compile;test->test"): _*)
   .settings(basicSettings: _*)
+  .enablePlugins(JavaAppPackaging)
 
 def jetProbeModule(id: String) = Project(id, base = file(id))
 
@@ -21,6 +31,7 @@ lazy val core = jetProbeModule("jetprobe-core")
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= coreDependencies)
 .enablePlugins(PackPlugin)
+
 
 lazy val rabbitConnector = jetProbeConnector("jetprobe-rabbitmq")
   .dependsOn(core % "compile->compile")

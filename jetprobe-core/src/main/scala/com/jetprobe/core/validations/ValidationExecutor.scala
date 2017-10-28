@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait ValidationExecutor[D <: DataSource] {
 
-  def execute(rulesBuilder: Seq[ValidationRule[D]], sink: D): Seq[ValidationResult]
+  def execute(rulesBuilder: Seq[ValidationRule[D]], sink: D, config : Map[String,Any]): Seq[ValidationResult]
 
 
 }

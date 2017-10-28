@@ -1,5 +1,6 @@
 package com.jetprobe.mongo.validation
 
+import com.jetprobe.core.parser.Expr
 import com.jetprobe.mongo.models._
 import com.jetprobe.mongo.sink.MongoSink
 
@@ -26,7 +27,7 @@ object MongoValidationSupport {
   CollectionStatsRule[U] = CollectionStatsRule(expected, actual, line = line, fullName = fullName)
 
   def checkDocuments[U](query: String, expected: U, actual: SourceBsonDocuments[String] => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  DocumentsRule[U] = DocumentsRule(expected, actual, query, fullName = fullName, line = line)
+  DocumentsRule[U] = DocumentsRule(expected, actual, Expr(query), fullName = fullName, line = line)
 
   implicit object MongoValidationExecutor extends MongoValidator
 

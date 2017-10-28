@@ -18,14 +18,14 @@ case class ScenarioBuilder(name: String,
 
 }
 
-case class ExecutableScenario(scenarioBuilder: ScenarioBuilder, className : String= "") {
+case class ExecutableScenario(scenarioBuilder: ScenarioBuilder, className : String= "", config : Map[String,Any] = Map.empty) {
 
   def build(system: ActorSystem,
             onExit: Action,
             controller: ActorRef): Scenario = {
     val ctx = ScenarioContext(system, controller)
     val entry = scenarioBuilder.build(ctx, onExit)
-    Scenario(scenarioBuilder.name, entry, ctx,className)
+    Scenario(scenarioBuilder.name, entry, ctx,className,config)
 
   }
 }
