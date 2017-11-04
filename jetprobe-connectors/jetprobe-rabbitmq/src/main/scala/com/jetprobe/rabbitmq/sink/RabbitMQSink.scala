@@ -97,7 +97,6 @@ object RabbitMQSink extends LazyLogging{
     val expressions = Seq(host, username, password)
     logger.info(s"parsing host value : ${host.value}")
     val parsedVals = ExpressionParser.parseAll(expressions, config)
-    println(parsedVals)
     parsedVals match {
       case Left(ex) =>
         logger.error(ex.getMessage)

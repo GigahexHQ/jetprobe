@@ -3,10 +3,13 @@ package com.jetprobe.core.controller
 import akka.actor.{ActorSystem, PoisonPill, Props}
 import com.jetprobe.core.action.BaseActor
 import com.jetprobe.core.controller.ControllerCommand.{ShutdownCmd, Start}
-import com.jetprobe.core.reporter.ConsoleReportWriter
+import com.jetprobe.core.reporter.{ConsoleReportWriter, HtmlReportWriter, ValidationReport}
 import com.jetprobe.core.session.{Session, UserMessage}
 import com.jetprobe.core.structure.Scenario
+import com.jetprobe.core.validations.{Failed, Passed, Skipped}
 import com.typesafe.scalalogging.LazyLogging
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * @author Shad.
@@ -14,14 +17,35 @@ import com.typesafe.scalalogging.LazyLogging
 class Controller extends BaseActor with LazyLogging {
   var total = 0
   var finished = 0
+  val reports: ArrayBuffer[ValidationReport] = ArrayBuffer.empty
 
   override def receive: Receive = {
     case UserMessage(session, timestamp) =>
       //logger.info(s"Total time taken for ${session.testName} : ${(timestamp - session.startDate) / 1000f} sec")
       val reporter = new ConsoleReportWriter
-      reporter.report(session.testName,session.className,session.validationResuls)
+      val status = if (session.validationResuls.count(_.status == Passed) == session.validationResuls.size) {
+        Passed
+      } else if (session.validationResuls.filter(_.status == Skipped).size > 0) {
+        Skipped
+      } else Failed
+
+      val finalReport = ValidationReport(session.testName,
+        session.validationResuls.count(_.status == Failed),
+        session.validationResuls.count(_.status == Passed),
+        session.validationResuls.count(_.status == Skipped),
+        (timestamp - session.startDate) / 1000,
+        status,
+        session.validationResuls
+      )
+
+      // Add the
+      reports.+=(finalReport)
+
+      reporter.report(session.testName, session.className, session.validationResuls)
       finished = finished + 1
-      if(finished == total){
+      if (finished == total) {
+        val htmlReporter = new HtmlReportWriter(session.attributes)
+        htmlReporter.write(reports)
         self ! ShutdownCmd
       }
 
@@ -29,7 +53,7 @@ class Controller extends BaseActor with LazyLogging {
       total = scenarios.size
       logger.info(s"total test scenarios : ${total}")
       scenarios.foreach(scn => {
-        val session = Session(scn.name,scn.className,attributes = scn.configAttr)
+        val session = Session(scn.name, scn.className, attributes = scn.configAttr)
         logger.info(s"Starting the session : ${scn.name}")
         scn.entry ! session
       })
@@ -44,7 +68,6 @@ class Controller extends BaseActor with LazyLogging {
           logger.debug("Actor system shutdown")
           System.exit(0)
       })
-
 
 
   }

@@ -19,37 +19,37 @@ class MongoValidationRulesBuilder(mongoSink: MongoSink) extends ValidationRulesB
   val mongoContext: mutable.Map[String, Any] = mutable.Map.empty
 
   def forServer(ruleBuilders: ServerStatsRule[_]*)(implicit d: DummyImplicit): Seq[ValidationRule[MongoSink]] = {
-    addAll(ruleBuilders.toSeq)
+    ruleBuilders.toSeq
     //mongoValidationRules.++=(ruleBuilders)
     //this
   }
 
   def forDatabase(db: String, ruleBuilders: DBStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
-    val rbs = ruleBuilders.map {
+    ruleBuilders.map {
       case rb: DBStatsRule[_] => rb.copy(database = Expr(db))
     }
-    addAll(rbs)
+
   }
 
   def forDatabaseAndCollection(database: String, collection: String, ruleBuilders: CollectionStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
 
-    val ruleDBAndColls = ruleBuilders.map {
+    ruleBuilders.map {
       case rb: CollectionStatsRule[_] => rb.copy(db = Expr(database), collection = Expr(collection))
     }
-    addAll(ruleDBAndColls)
+    //addAll(ruleDBAndColls)
   }
 
   def forDatabaseAndCollection(database: String, collection: String, ruleBuilders: DocumentsRule[_]*)
                               (implicit d: DummyImplicit): Seq[ValidationRule[MongoSink]] = {
 
-    val ruleDBAndColls = ruleBuilders.map {
+    ruleBuilders.map {
       case rb: DocumentsRule[_] => rb.copy(db = Expr(database), collection = Expr(collection))
     }
-    addAll(ruleDBAndColls)
+
   }
 
   def forServer(ruleBuilders: DatabaseListRule[_]*): Seq[ValidationRule[MongoSink]] = {
-    addAll(ruleBuilders.toSeq)
+    ruleBuilders.toSeq
   }
 
   private def chain(ruleBuilders: ValidationRule[MongoSink]*): ValidationRulesBuilder[MongoSink] = {
@@ -58,8 +58,6 @@ class MongoValidationRulesBuilder(mongoSink: MongoSink) extends ValidationRulesB
   }
 
   override def build: ArrayBuffer[ValidationRule[MongoSink]] = rules
-
-  override def context: Map[String, Any] = mongoContext.toMap
 
 
 }

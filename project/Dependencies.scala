@@ -25,6 +25,8 @@ object Dependencies {
   private val circeParser = "io.circe" %% "circe-parser" % circeCore.revision
   private val sourceCode = "com.lihaoyi" %% "sourcecode" % "0.1.4"
   private val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
+  private val scalatags = "com.lihaoyi" %% "scalatags" % "0.6.7"
+  private val pprint = "com.lihaoyi" %% "pprint" % "0.5.3"
 
 
   /***************************************
@@ -67,7 +69,9 @@ object Dependencies {
     jongo,
     snakeYaml,
     sourceCode,
+    scalatags,
     ahc,
+    pprint,
     akkaActor,
     akkaSlf4j,
     scopt,

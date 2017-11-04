@@ -53,10 +53,10 @@ class MyTestScenario extends TestScenario {
         rbt.forExchange(exchange = "amq.direct", vHost = "/")(
           checkExchange[String]("direct", exchangProps => exchangProps.exchangeType),
           checkExchange[Int](1, _.bindings.size),
+          checkExchange[Int](1, _.bindings.size),
           checkExchange[Boolean](false, _.bindings.exists(_.to.startsWith("mdm.match-api")))
-        )
-
-        rbt.forQueue(queue = "mdm.business-entity.dispatch.api", vHost = "iORXPuAssgckXVq8B4xcwg")(
+        ) ++
+        rbt.forQueue(queue = "mdm.business-entity.dispatch.api", vHost = "message")(
           checkQueue[Boolean](true, _.autoDelete),
           checkQueue[Boolean](true, _.durable)
 
@@ -76,10 +76,3 @@ class MyTestScenario extends TestScenario {
       .build
   }
 }
-/*
-object MyTestScenario extends App {
-
-  val testScenario = new MyTestScenario
-  testScenario.buildScenario
-}
-*/

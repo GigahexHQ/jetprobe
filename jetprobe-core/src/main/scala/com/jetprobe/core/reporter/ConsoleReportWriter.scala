@@ -1,5 +1,5 @@
 package com.jetprobe.core.reporter
-import com.jetprobe.core.validations.ValidationResult
+import com.jetprobe.core.validations.{Passed, ValidationResult}
 
 /**
   * @author Shad.
@@ -12,9 +12,9 @@ class ConsoleReportWriter extends ResultReporter{
     println(s"* Validation Report for ${scenario} *")
     println("************************************************************")
     println("Validation Summary : ")
-    println(s"Class : $className , Failed : ${results.filterNot(_.isSuccess).size}, Passed : ${results.filter(_.isSuccess).size}")
-    results.filterNot(_.isSuccess).foreach{ res =>
-      println(s"${Console.RED}   ${res.msgOnFailure.get}")
+    println(s"Class : $className , Failed : ${results.filterNot(_.status.equals(Passed)).size}, Passed : ${results.filter(_.status.equals(Passed)).size}")
+    results.filterNot(_.status.equals(Passed)).foreach{ res =>
+      println(s"${Console.RED} Test at ${res.sourceCode._1.value}:${res.sourceCode._2.value} ${res.status.toString.toLowerCase}. Cause : ${res.message}")
     }
     println(Console.WHITE)
 

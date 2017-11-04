@@ -29,11 +29,11 @@ class BsonDocValidator(host: String, database : String, collection : String) {
     val docs = SourceBsonDocuments(result.count(),result.iterator().asScala)
     val actualResult = rule.actual(docs)
     actualResult == rule.expected match {
-      case true => ValidationResult(true, Some(rule.onSuccess), None)
+      case true => ValidationResult.success(rule)
       case false =>
         val failureMessage = getFailureMessage(rule.name, actualResult,
           rule.expected, rule.fullName.value, rule.line.value)
-        ValidationResult(false, None, Some(failureMessage))
+        ValidationResult.failed(rule,failureMessage)
     }
   }
 

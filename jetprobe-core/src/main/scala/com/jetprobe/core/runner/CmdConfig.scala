@@ -5,7 +5,7 @@ import java.io.File
 /**
   * @author Shad.
   */
-case class CmdConfig(testableJar : File = new File("."), configFile : Option[File] = None)
+case class CmdConfig(testableJar : File = new File("."), configFile : Option[File] = None, reportPath : String = "./report.html")
 
 object CmdConfig {
 
@@ -19,6 +19,10 @@ object CmdConfig {
     opt[File]('c', "config").valueName("<config>").
       action( (x, c) => c.copy(configFile = Some(x)) ).
       text("Test config file path")
+
+    opt[String]('r', "reportPath").valueName("<path>").
+      action( (x, c) => c.copy(reportPath = x) ).
+      text("Report output file path")
 
     help("help").text("prints this usage text")
 

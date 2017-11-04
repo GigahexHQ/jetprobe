@@ -17,6 +17,7 @@ case class ExchangeValidationRule[U <: Any](expected: U,
                                      fullName: FullName) extends ValidationRule[RabbitMQSink] {
   def name = s"Validation for exchange : ${exchangeName.value}"
 
+
 }
 
 case class QueueValidationRule[U <: Any](expected: U,

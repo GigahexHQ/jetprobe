@@ -5,6 +5,7 @@ import com.jetprobe.core.extractor.JsonPathExtractor._
 import com.jetprobe.core.http.Http
 import com.jetprobe.core.runner.Runner
 import com.jetprobe.core.Predef._
+import com.jetprobe.rabbitmq.model.ExchangeProps
 import com.jetprobe.rabbitmq.sink.RabbitMQSink
 import com.jetprobe.rabbitmq.validation.RabbitMQValidationSupport._
 
@@ -16,6 +17,22 @@ import scala.concurrent.duration._
   */
 object DemoScenarioRun extends App {
 
+  type Add = Int => Int
+
+  def add(value : sourcecode.Args)(implicit enclosing: sourcecode.Enclosing) = {
+    println(enclosing.value + " [" + value.source + "]: " + value.value)
+  }
+  def debug[V](value: sourcecode.Text[V])(implicit enclosing: sourcecode.Enclosing) = {
+    println(enclosing.value + " [" + value.source + "]: " + value.value)
+  }
+  class Foo(arg: Int){
+    debug(arg) // sourcecode.DebugRun.main Foo [arg]: 123
+    def bar(param: String) = {
+      debug(100 + 200)
+      //add((x:Int) => x+1)
+    }
+  }
+  new Foo(123).bar("lol")
 
   val dataset = fromTemplate(
     "C:\\Users\\samez\\Documents\\match-service\\sample.txt",
@@ -34,7 +51,7 @@ object DemoScenarioRun extends App {
     // .http(getPosts)
     .validate(rabbit) { rbt =>
     rbt.forExchange(exchange = "history_event_data", vHost = "iORXPuAssgckXVq8B4xcwg")(
-      checkExchange[String]("direct", ex => ex.exchangeType),
+     // viewExchange[String]("direct", _.exchangeType),
       checkExchange[Int](1, _.bindings.size),
       checkExchange[Boolean](true, _.bindings.exists(_.to.startsWith("mdm.match-api")))
 
@@ -45,6 +62,7 @@ object DemoScenarioRun extends App {
       checkQueue[Boolean](true, _.durable)
 
     )
+
   }
     //.pause(3.seconds)
 
@@ -53,8 +71,8 @@ object DemoScenarioRun extends App {
 
   implicit val actorSystem = ActorSystem()
 
- // Runner().run(pipe)
-  Thread.sleep(3000)
+ Runner().run(Seq(pipe))
+  //Thread.sleep(3000)
   Await.result(actorSystem.terminate(), 10.seconds)
   //System.exit(0)
 

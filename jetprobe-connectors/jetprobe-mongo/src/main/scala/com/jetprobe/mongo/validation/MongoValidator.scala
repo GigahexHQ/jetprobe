@@ -43,7 +43,7 @@ class MongoValidator extends ValidationExecutor[MongoSink] with LazyLogging {
         case None => throw new Exception("Parser error for mongo client. Check the config.")
       }
     } catch {
-      case ex: Exception => rules.map(x => ValidationResult(false, None, Some("Validaiton failed : " + ex.getMessage)))
+      case ex: Exception => rules.map(x => ValidationResult.skipped(x,ex.getMessage))
     }
   }
 }
@@ -137,7 +137,7 @@ object MongoValidator {
   def validate[T, U](meta: Future[Either[Exception, T]], rule: ValidationRule[_])
                     (validator: (T, ValidationRule[_]) => ValidationResult): Future[ValidationResult] = {
     meta.map {
-      case Left(error) => ValidationResult(false, None, Some(s"Validation Failed. Cause : ${error.getMessage}"))
+      case Left(error) => ValidationResult.skipped(rule,error.getMessage)
       case Right(fetchedMeta) => validator(fetchedMeta, rule)
     }
   }
@@ -150,9 +150,9 @@ object MongoValidator {
     * @tparam U The type of the validation rule
     * @return
     */
-  def runValidation[T, U](meta: Future[Either[Error, T]], rule: U): Future[ValidationResult] = {
+  def runValidation[T, U](meta: Future[Either[Error, T]], rule: ValidationRule[_]): Future[ValidationResult] = {
     meta.map {
-      case Left(error) => ValidationResult(false, None, Some(s"Validation Failed. Cause : ${error.getMessage}"))
+      case Left(error) => ValidationResult.skipped(rule,error.getMessage)
       case Right(fetchedMeta) =>
         fetchedMeta match {
           case ss: ServerStats => runServerStatsValidator(ss, rule.asInstanceOf[ServerStatsRule[_]])
@@ -167,20 +167,20 @@ object MongoValidator {
 
   private[mongo] def runCollStatsValidation(collStats: CollectionStats, rule: CollectionStatsRule[_]): ValidationResult = {
     rule.actual(collStats) == rule.expected match {
-      case true => ValidationResult(true, Some(rule.onSuccess), None)
+      case true => ValidationResult.success(rule)
       case false =>
         val failureMessage = rule.onFailure(rule.actual(collStats), rule.expected)
-        ValidationResult(false, None, Some(failureMessage))
+        ValidationResult.failed(rule,failureMessage)
     }
   }
 
   private[mongo] def runDbStatsValidation(dBStats: DBStats, rule: DBStatsRule[_]): ValidationResult = {
     rule.actual(dBStats) == rule.expected match {
-      case true => ValidationResult(true, Some(rule.onSuccess), None)
+      case true => ValidationResult.success(rule)
       case false =>
         val failureMessage = getFailureMessage(rule.name, rule.actual(dBStats),
           rule.expected, rule.fullName.value, rule.line.value)
-        ValidationResult(false, None, Some(failureMessage))
+        ValidationResult.failed(rule,failureMessage)
     }
   }
 
@@ -189,11 +189,11 @@ object MongoValidator {
     val expected = statsRule.expected
     val actual = statsRule.actual(serverStats)
     if (expected == actual) {
-      ValidationResult(true, Some(statsRule.onSuccess), None)
+      ValidationResult.success(statsRule)
     }
     else {
       val failureMessage = s"${statsRule.name} failed at ${statsRule.fullName.value} : ${statsRule.line.value}. Expected = $expected , Actual = $actual"
-      ValidationResult(false, None, Some(failureMessage))
+      ValidationResult.failed(statsRule,failureMessage)
     }
   }
 
@@ -243,11 +243,11 @@ object MongoValidator {
   private[mongo] def runDBListValidation(dbList: DatabaseList, dbListRule: DatabaseListRule[_]): ValidationResult = {
 
     dbListRule.actual(dbList) == dbListRule.expected match {
-      case true => ValidationResult(true, Some(dbListRule.onSuccess), None)
+      case true => ValidationResult.success(dbListRule)
       case _ =>
         val failureMessage = getFailureMessage(dbListRule.name, dbListRule.actual(dbList),
           dbListRule.expected, dbListRule.fullName.value, dbListRule.line.value)
-        ValidationResult(false, None, Some(failureMessage))
+        ValidationResult.failed(dbListRule,failureMessage)
     }
 
   }

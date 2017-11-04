@@ -9,7 +9,9 @@ import com.jetprobe.core.validations.{ValidationExecutor, ValidationRule, Valida
 /**
   * @author Shad.
   */
-class ValidationBuilder[D <: DataSource](sink: D, rules: Seq[ValidationRule[D]])(implicit executor : ValidationExecutor[D]) extends ActionBuilder {
+class ValidationBuilder[D <: DataSource](sink: D, rules: Seq[ValidationRule[D]])
+                                        (implicit executor : ValidationExecutor[D]) extends ActionBuilder {
+
 
   /**
     * @param ctx  the test context

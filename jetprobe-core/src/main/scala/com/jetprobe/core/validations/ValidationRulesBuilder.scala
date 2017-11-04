@@ -11,7 +11,6 @@ trait ValidationRulesBuilder[D <: DataSource] {
 
   def build : ArrayBuffer[ValidationRule[D]]
 
-  def context : Map[String,Any]
 
 }
 

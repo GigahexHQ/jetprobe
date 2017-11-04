@@ -45,7 +45,7 @@ class RabbitMQValidator extends ValidationExecutor[RabbitMQSink] with LazyLoggin
           throw new Exception("Unable to build http client for RabbitMQ")
       }
     } catch {
-      case ex: Exception => rules.map(x => ValidationResult.skipped(x,ex.getMessage))
+      case ex: Exception => rules.map(x => ValidationResult.skipped(x, ex.getMessage))
     }
 
   }
@@ -99,16 +99,20 @@ object RabbitMQValidator extends LazyLogging {
 
   }
 
-  def runExchangeValidation(exchangeProps: Either[Exception, ExchangeProps], rule: ExchangeValidationRule[_]): Future[ValidationResult] = {
+  def runExchangeValidation(exchangeProps: Either[Exception, ExchangeProps], rule: ExchangeValidationRule[_])
+                           (implicit name: sourcecode.Name, args: sourcecode.Args): Future[ValidationResult] = {
     Future {
       ValidationExecutor.validate[ExchangeProps](exchangeProps, rule) {
         case (mayBeProps, r) =>
           val ruleImpl = r.asInstanceOf[ExchangeValidationRule[_]]
           if (ruleImpl.expected == ruleImpl.actual(mayBeProps)) {
+            //println(name.value + args.value.map(_.map(a => a.source + "=" + a.value).mkString("(", ", ", ")")).mkString(""))
             ValidationResult.success(ruleImpl)
           }
-          else
-            ValidationResult(false, None, Some(ruleImpl.onFailure(ruleImpl.actual(mayBeProps), ruleImpl.expected)))
+          else {
+            //println(name.value + args.value.map(_.map(a => a.source + "=" + a.value).mkString("(", ", ", ")")).mkString(""))
+            ValidationResult.failed(ruleImpl, ruleImpl.onFailure(ruleImpl.actual(mayBeProps), ruleImpl.expected))
+          }
 
       }
     }
@@ -124,7 +128,8 @@ object RabbitMQValidator extends LazyLogging {
           if (ruleImpl.expected == ruleImpl.actual(mayBeProps))
             ValidationResult.success(ruleImpl)
           else
-            ValidationResult(false, None, Some(ruleImpl.onFailure(ruleImpl.actual(mayBeProps), ruleImpl.expected)))
+            ValidationResult.failed(ruleImpl, ruleImpl.onFailure(ruleImpl.actual(mayBeProps), ruleImpl.expected))
+
 
       }
     }
@@ -141,7 +146,7 @@ object RabbitMQValidator extends LazyLogging {
           val parsedQueue = parsedVals(queue.value)
           val parsedVhost = parsedVals(vHost.value)
           val queueInfo = client.getQueue(parsedVhost, parsedQueue)
-          if(queueInfo == null){
+          if (queueInfo == null) {
             throw new Exception(s"Queue = ${parsedQueue} at vHost = ${parsedVhost} not found. Verify the configurations before proceeding.")
           }
           Right(QueueProps(queueInfo.getName, queueInfo.isDurable, queueInfo.isAutoDelete))
