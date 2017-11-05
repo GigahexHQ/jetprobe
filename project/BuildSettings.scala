@@ -10,6 +10,8 @@ object BuildSettings {
 
   lazy val basicSettings = Seq(
     organization := "com.jetprobe",
+    resolvers +=
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     version := "0.1.0-SNAPSHOT",
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq("2.12.2", "2.11.8"),

@@ -2,7 +2,7 @@ package com.jetprobe.core.runner
 
 import java.io.File
 import java.net.{URL, URLClassLoader}
-import java.util.function.Consumer
+import scala.collection.JavaConverters._
 import java.io.FileInputStream
 import java.lang.reflect.Modifier
 import java.util
@@ -25,15 +25,12 @@ object TestRunner extends LazyLogging with Version {
 
   def main(args: Array[String]): Unit = {
 
-    if (System.getenv("JETPROBE_HOME") == null) {
-      println("JETPROBE_HOME variable must be set before running the application")
-      System.exit(1)
-    }
-    appHome = System.getenv("JETPROBE_HOME")
+
+    appHome = System.getProperty("prog.home")
 
     //TODO Better approach to show the version
     if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
-      println(currentVersion)
+      println(getProgramVersion)
       System.exit(0)
     }
     val parsedConfig = CmdConfig.parser.parse(args, CmdConfig())
@@ -46,6 +43,12 @@ object TestRunner extends LazyLogging with Version {
 
   }
 
+  def getProgramVersion : String = {
+    val progName = System.getProperty("prog.name","jetprobe")
+    val version =  System.getProperty("prog.version")
+    val revision =  System.getProperty("prog.revision")
+    s"$progName $version \nbuild : $revision"
+  }
 
   def extractAndRun(jarPath: String, configFile: Option[File], reportPath: String): Unit = {
     val classNames = new util.ArrayList[String]
@@ -74,7 +77,7 @@ object TestRunner extends LazyLogging with Version {
     val runner = Runner()
     val scenarios = ArrayBuffer.empty[ExecutableScenario]
 
-    classNames.forEach((csName: String) => {
+    classNames.asScala.foreach(csName => {
       val testBuilder = classLoader.loadClass(csName)
       println(s"loading class $csName")
 
