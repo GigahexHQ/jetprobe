@@ -2,7 +2,7 @@
 A mini-framework for creating and executing validation rules to test the data pipeline. It exposes interfaces to build connectors for
 different infrastructure components (databases, file system, message broker, etc.)
 
-## User Doucmentation
+## User Documentation
 For user guide, refer to the (documentation [website](https://jetprobe.com) . The corresponding repo for the doc is available
 [here](https://github.com/jetprobe/jetprobe-docs).
 
