@@ -1,4 +1,4 @@
-# Jet Probe
+# Jet Probe [![Build Status](https://travis-ci.org/amezng/fastgen.svg?branch=master)](https://travis-ci.org/jetprobe/jetprobe)
 A mini-framework for creating and executing validation rules to test the data pipeline. It exposes interfaces to build connectors for
 different infrastructure components (databases, file system, message broker, etc.)
 
