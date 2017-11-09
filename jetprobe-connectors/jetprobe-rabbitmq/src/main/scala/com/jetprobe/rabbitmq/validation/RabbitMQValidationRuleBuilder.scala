@@ -3,7 +3,6 @@ package com.jetprobe.rabbitmq.validation
 import com.jetprobe.core.parser.Expr
 import com.jetprobe.core.validations.{ValidationRule, ValidationRulesBuilder}
 import com.jetprobe.rabbitmq.sink.RabbitMQSink
-import com.jetprobe.rabbitmq.validation.RabbitMQValidationRuleBuilder.rules
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -12,7 +11,6 @@ import scala.collection.mutable.ArrayBuffer
   */
 class RabbitMQValidationRuleBuilder(sink : RabbitMQSink) extends ValidationRulesBuilder[RabbitMQSink]{
 
-  import RabbitMQValidationRuleBuilder._
 
   val rules: ArrayBuffer[ValidationRule[RabbitMQSink]] = ArrayBuffer.empty
 
@@ -27,15 +25,6 @@ class RabbitMQValidationRuleBuilder(sink : RabbitMQSink) extends ValidationRules
 
   override def build: ArrayBuffer[ValidationRule[RabbitMQSink]] = rules
 
-}
-
-object RabbitMQValidationRuleBuilder {
-
-  val rules: ArrayBuffer[ValidationRule[RabbitMQSink]] = ArrayBuffer.empty
-
-  private[rabbitmq] def addAll(ruleBuilders: Seq[ValidationRule[RabbitMQSink]]): Seq[ValidationRule[RabbitMQSink]] = {
-    rules.++=(ruleBuilders)
-  }
 }
 
 

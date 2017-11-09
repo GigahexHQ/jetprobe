@@ -9,7 +9,8 @@ import com.typesafe.scalalogging.LazyLogging
 trait DataSource
 trait DataSink extends LazyLogging with DataSource{
 
-  def save(record : Generator) : Unit
+  
+  def save(record : Generator) : Unit = ???
 
 }
 

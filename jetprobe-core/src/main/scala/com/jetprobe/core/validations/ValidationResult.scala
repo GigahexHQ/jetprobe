@@ -12,6 +12,10 @@ case class ValidationResult(testName : String,
 
 object ValidationResult {
 
+  def getFailedMessage(expected : Any, actual : Any) : String = {
+    s"Expected = $expected, Actual = $actual"
+  }
+
   def success(rule: ValidationRule[_]): ValidationResult = ValidationResult(rule.name,Passed, rule.onSuccess, (rule.fullName,rule.line))
 
   def failed(rule : ValidationRule[_], message : String) : ValidationResult = ValidationResult(rule.name,Failed,message,(rule.fullName,rule.line))

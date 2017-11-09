@@ -41,14 +41,21 @@ lazy val mongoConnector = jetProbeConnector("jetprobe-mongo")
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= mongoDeps)
 
-lazy val samples = jetProbeModule("jetprobe-sample")
+/*lazy val samples = jetProbeModule("jetprobe-sample")
 
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= Seq(
       "com.jetprobe" %% "jetprobe-core" % "0.1.0-SNAPSHOT",
     "com.jetprobe" %% "jetprobe-rabbitmq" % "0.1.0-SNAPSHOT",
     "com.jetprobe" %% "jetprobe-mongo" % "0.1.0-SNAPSHOT"
-  ))
+  ))*/
+
+lazy val samples = jetProbeModule("jetprobe-sample")
+  .dependsOn(core % "compile->compile")
+  .dependsOn(mongoConnector % "compile->compile")
+  .dependsOn(rabbitConnector % "compile->compile")
+  .settings(basicSettings: _*)
+
 
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")

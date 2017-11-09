@@ -53,3 +53,22 @@ class HttpRequestAction(httpRequestBuilder: HttpRequestBuilder, val next: Action
 
   }
 }
+
+object HttpRequestAction {
+
+  def handleHttpRequest(reqBuilder: HttpRequestBuilder, parsedURI: String): HttpResponse = {
+    val asyncHttpClient = new DefaultAsyncHttpClient
+    val requestBuilder = reqBuilder.method match {
+      case GET => asyncHttpClient.prepareGet(parsedURI)
+      case POST => asyncHttpClient.preparePost(parsedURI).setBody(reqBuilder.body.get)
+
+    }
+    reqBuilder.headers.foreach(hd => requestBuilder.addHeader(hd._1, hd._2))
+    val request = requestBuilder.build()
+    val response = requestBuilder.execute().get()
+    asyncHttpClient.close()
+    HttpResponse(request, response.getHeaders, new StringResponseBody(response.getResponseBody, UTF_8), Some(response.getStatusCode))
+
+  }
+
+}
