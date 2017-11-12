@@ -11,6 +11,8 @@ publishTo := Some(
 )
 sonatypeProfileName := "com.jetprobe"
 
+releaseCrossBuild := true
+
 lazy val root = Project("jetprobe", file("."))
   .dependsOn(Seq(core,rabbitConnector,mongoConnector).map(_ % "compile->compile;test->test"): _*)
   .settings(basicSettings: _*)

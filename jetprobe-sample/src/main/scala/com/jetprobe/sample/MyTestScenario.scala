@@ -41,49 +41,46 @@ class MyTestScenario extends TestScenario {
       jsonPath("$.id", saveAs = "id")
     )
 
-  override def buildScenario: ExecutableScenario = {
-
-    scenario("PauseScn")
-      .http(insertPost)
-      .pause(3.seconds)
-      .http(getPosts)
-      .pause(1.seconds)
-      .validate[HttpRequestBuilder](getPosts) { httpPost =>
+  override def buildScenario: ExecutableScenario = scenario("PauseScn")
+    .http(insertPost)
+    .pause(3.seconds)
+    .http(getPosts)
+    .pause(1.seconds)
+    .validate[HttpRequestBuilder](getPosts) { httpPost =>
 
       httpPost.forHttpRequest(
-        checkHttpResponse(202, _.status)
-      ) ++
-        httpPost.forJsonQuery("$.userId")(
-          checkExtractedValue("1", x => x)
-        )
+      checkHttpResponse(202, _.status)
+    ) ++
+      httpPost.forJsonQuery("$.userId") {
+        checkExtractedValue("1", x => x)
+      }
 
-    }
-
-      .validate[RabbitMQSink](rabbit) { rbt =>
-      rbt.forExchange(exchange = "amq.direct", vHost = "/")(
-        checkExchange[String]("direct", exchangProps => exchangProps.exchangeType),
-        checkExchange[Int](1, _.bindings.size),
-        checkExchange[Int](1, _.bindings.size),
-        checkExchange[Boolean](false, _.bindings.exists(_.to.startsWith("mdm.match-api")))
-      ) ++
-        rbt.forQueue(queue = "mdm.business-entity.dispatch.api", vHost = "message")(
-          checkQueue[Boolean](true, _.autoDelete),
-          checkQueue[Boolean](true, _.durable)
-
-        )
-    }
-
-      .validate[MongoSink](mongo) { mng =>
-      mng.forServer(
-        checkStats[String]("3.4.0", _.version),
-        checkStats[Boolean](true, _.version.startsWith("3.4")),
-        checkStats[Boolean](true, _.connections.current < 50),
-        checkStats[Long](80L, _.opcounters.insert)
-      )
-    }
-
-      .pause(3.seconds)
-      //Add some more tests
-      .build
   }
+
+    .validate[RabbitMQSink](rabbit) { rbt =>
+    rbt.forExchange(exchange = "amq.direct", vHost = "/")(
+      checkExchange[String]("direct", exchangProps => exchangProps.exchangeType),
+      checkExchange[Int](1, _.bindings.size),
+      checkExchange[Int](1, _.bindings.size),
+      checkExchange[Boolean](false, _.bindings.exists(_.to.startsWith("mdm.match-api")))
+    ) ++
+      rbt.forQueue(queue = "mdm.business-entity.dispatch.api", vHost = "message")(
+        checkQueue[Boolean](true, _.autoDelete),
+        checkQueue[Boolean](true, _.durable)
+
+      )
+  }
+
+    .validate[MongoSink](mongo) { mng =>
+    mng.forServer(
+      checkStats[String]("3.4.0", _.version),
+      checkStats[Boolean](true, _.version.startsWith("3.4")),
+      checkStats[Boolean](true, _.connections.current < 50),
+      checkStats[Long](80L, _.opcounters.insert)
+    )
+  }
+
+    .pause(3.seconds)
+    //Add some more tests
+    .build
 }

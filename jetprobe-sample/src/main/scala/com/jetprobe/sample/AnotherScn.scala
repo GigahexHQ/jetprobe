@@ -16,7 +16,7 @@ class AnotherScn extends TestScenario {
 
   override def buildScenario: ExecutableScenario = scenario("Second").
     pause(4.seconds)
-    .validate[RabbitMQSink](rabbit) { rbt =>
+    /*.validate[RabbitMQSink](rabbit) { rbt =>
 
     val exchangeTests = rbt.forExchange(exchange = "amq.direct", vHost = "/")(
       checkExchange[String]("direct", exchangProps => exchangProps.exchangeType),
@@ -31,7 +31,7 @@ class AnotherScn extends TestScenario {
     )
 
     exchangeTests ++ queueTests
-  }
+  }*/
     .build
 
 }
