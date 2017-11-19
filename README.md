@@ -1,4 +1,6 @@
 # Jet Probe [![Build Status](https://travis-ci.org/jetprobe/jetprobe.svg?branch=master)](https://travis-ci.org/jetprobe/jetprobe)
+
+[![Join the chat at https://gitter.im/jetprobe/jetprobe](https://badges.gitter.im/jetprobe/jetprobe.svg)](https://gitter.im/jetprobe/jetprobe?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 A mini-framework for creating and executing validation rules to test the data pipeline. It exposes interfaces to build connectors for
 different infrastructure components (databases, file system, message broker, etc.)
 
