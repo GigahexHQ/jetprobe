@@ -11,13 +11,6 @@ publishTo := Some(
 )
 sonatypeProfileName := "com.jetprobe"
 
-releaseCrossBuild := true
-
-lazy val root = Project("jetprobe", file("."))
-  .dependsOn(Seq(core,rabbitConnector,mongoConnector).map(_ % "compile->compile;test->test"): _*)
-  .settings(basicSettings: _*)
-  .enablePlugins(JavaAppPackaging)
-
 def jetProbeModule(id: String) = Project(id, base = file(id))
 
 def jetProbeConnector(id: String) = Project(id, base = file("jetprobe-connectors/" + id))
@@ -30,32 +23,31 @@ lazy val core = jetProbeModule("jetprobe-core")
   //.dependsOn(commons % "compile->compile;test->test")
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= coreDependencies)
-.enablePlugins(PackPlugin)
+  .enablePlugins(PackPlugin)
+
+lazy val consulConnector = jetProbeConnector("jetprobe-consul")
+  .dependsOn(core % "compile->compile")
+  .settings(basicSettings: _*)
+  .settings(libraryDependencies ++= consulDeps ++ testDependencies)
 
 
 lazy val rabbitConnector = jetProbeConnector("jetprobe-rabbitmq")
   .dependsOn(core % "compile->compile")
   .settings(basicSettings: _*)
-  .settings(libraryDependencies ++= rabbitDeps)
+  .settings(libraryDependencies ++= rabbitDeps ++ testDependencies)
 
 lazy val mongoConnector = jetProbeConnector("jetprobe-mongo")
   .dependsOn(core % "compile->compile")
   .settings(basicSettings: _*)
-  .settings(libraryDependencies ++= mongoDeps)
+  .settings(libraryDependencies ++= mongoDeps ++ testDependencies)
 
-/*lazy val samples = jetProbeModule("jetprobe-sample")
 
-  .settings(basicSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-      "com.jetprobe" %% "jetprobe-core" % "0.1.0-SNAPSHOT",
-    "com.jetprobe" %% "jetprobe-rabbitmq" % "0.1.0-SNAPSHOT",
-    "com.jetprobe" %% "jetprobe-mongo" % "0.1.0-SNAPSHOT"
-  ))*/
-
+//This subproject is for quick testing..
 lazy val samples = jetProbeModule("jetprobe-sample")
   .dependsOn(core % "compile->compile")
   .dependsOn(mongoConnector % "compile->compile")
   .dependsOn(rabbitConnector % "compile->compile")
+  .dependsOn(consulConnector % "compile->compile")
   .settings(basicSettings: _*)
 
 

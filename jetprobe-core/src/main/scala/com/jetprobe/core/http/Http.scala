@@ -11,6 +11,8 @@ case class Http(requestName: String) {
 
   def get(url: String): HttpRequestBuilder = httpRequest(requestName, GET, url)
   def post(url : String) : HttpRequestBuilder = httpRequest(requestName,POST,url)
+  def delete(url : String) : HttpRequestBuilder = httpRequest(requestName,DELETE,url)
+  def put(url : String): HttpRequestBuilder = httpRequest(requestName,PUT,url)
 
   def httpRequest(name: String, method: RequestType, url: String): HttpRequestBuilder = HttpRequestBuilder(name, uri = url, method = method)
 

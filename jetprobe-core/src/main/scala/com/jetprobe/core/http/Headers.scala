@@ -24,6 +24,7 @@ object HeaderNames {
   val ContentMD5 = "Content-MD5"
   val ContentRange = "Content-Range"
   val ContentType = "Content-Type"
+  val JSONType = "application/json"
   val Cookie = "Cookie"
   val Date = "Date"
   val DNT = "DNT"
@@ -116,4 +117,5 @@ trait RequestType
 case object GET extends RequestType
 case object POST extends RequestType
 case object PUT extends RequestType
+case object DELETE extends RequestType
 

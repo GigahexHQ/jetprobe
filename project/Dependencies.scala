@@ -55,11 +55,21 @@ object Dependencies {
     slf4jLog4j
   )
 
+  /************************************
+    * Consul connector dependencies
+    ***********************************/
+  private val consulClient = "com.ecwid.consul" % "consul-api" % "1.3.0"
+
+  val consulDeps = Seq(
+    consulClient
+  )
+
 
   /** *****************************
     * Test dependencies
     * ****************************/
-  private val scalaTest = "org.scalatest" %% "scalatest" % "3.0.3"
+    private val scalactic = "org.scalactic" %% "scalactic" % "3.0.3"
+  private val scalaTest = "org.scalatest" %% "scalatest" % "3.0.3" % "test"
   private val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.13.5" % "test"
   private val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaActor.revision % "test"
   private val mockitoCore = "org.mockito" % "mockito-core" % "2.3.11" % "test"
@@ -90,5 +100,5 @@ object Dependencies {
     circeGeneric
   )
 
-  val testDependencies = Seq(scalaTest, scalaCheck, akkaTestKit, mockitoCore)
+  val testDependencies = Seq(scalactic,scalaTest, scalaCheck, akkaTestKit, mockitoCore)
 }

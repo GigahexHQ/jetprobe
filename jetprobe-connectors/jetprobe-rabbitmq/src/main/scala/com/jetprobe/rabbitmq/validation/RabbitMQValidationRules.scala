@@ -10,24 +10,24 @@ import sourcecode.{FullName, Line}
   * @author Shad.
   */
 case class ExchangeValidationRule[U <: Any](expected: U,
-                                     actual: (ExchangeProps) => U,
-                                     vHost: Expr = Expr(),
-                                     exchangeName: Expr = Expr(),
-                                     line: Line,
-                                     fullName: FullName) extends ValidationRule[RabbitMQSink] {
-  def name = s"Validation for exchange : ${exchangeName.value}"
-
+                                            actual: (ExchangeProps) => U,
+                                            vHost: Expr = Expr(),
+                                            exchangeName: Expr = Expr(),
+                                            line: Line,
+                                            fullName: FullName,
+                                            name : String = "") extends ValidationRule[RabbitMQSink] {
 
 }
 
 case class QueueValidationRule[U <: Any](expected: U,
-                                  actual: (QueueProps) => U,
-                                  vhost: Expr = Expr(),
-                                  queueName: Expr = Expr(),
-                                  line: Line,
-                                  fullName: FullName) extends ValidationRule[RabbitMQSink] {
+                                         actual: (QueueProps) => U,
+                                         vhost: Expr = Expr(),
+                                         queueName: Expr = Expr(),
+                                         line: Line,
+                                         fullName: FullName,
+                                         name: String = "") extends ValidationRule[RabbitMQSink] {
 
-  def name = s"Validation for Queue : ${queueName.value} in virtual host : ${vhost.value}"
+  //def name = s"Validation for Queue : ${queueName.value} in virtual host : ${vhost.value}"
 }
 
 //case class MessageValidationRule

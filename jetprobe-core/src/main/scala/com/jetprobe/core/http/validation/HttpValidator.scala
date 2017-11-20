@@ -17,7 +17,7 @@ class HttpValidator extends ValidationExecutor[HttpRequestBuilder] with LazyLogg
   def handleHttpRequest(sink: HttpRequestBuilder, config: Map[String, Any]): Option[HttpResponse] = {
     ExpressionParser.parse(sink.uri, config) match {
       case Some(httpURI) =>
-        Some(HttpRequestAction.handleHttpRequest(sink, httpURI))
+        Some(HttpRequestAction.handleHttpRequests(sink, httpURI))
       case None =>
         logger.error(s"Unable to extract request URI for variable ${sink.uri}")
         None

@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait ValidationExecutor[D <: DataSource] {
 
-  def execute(rulesBuilder: Seq[ValidationRule[D]], sink: D, config : Map[String,Any]): Seq[ValidationResult]
+  def execute(rules: Seq[ValidationRule[D]], sink: D, config : Map[String,Any]): Seq[ValidationResult]
 
 
 }
@@ -19,6 +19,17 @@ object ValidationExecutor {
 
   def validate[T <: DataSource](meta: Either[Exception, T], rule: ValidationRule[_])
                                (validator: (T, ValidationRule[_]) => ValidationResult)
+  : ValidationResult = {
+
+    meta match {
+      case Left(error) => ValidationResult.skipped(rule, error.getMessage)
+      case Right(fetchedMeta) => validator(fetchedMeta, rule)
+
+    }
+  }
+
+  def validateGivenRule[T <: DataSource,R <: ValidationRule[_]](meta: Either[Exception, T], rule: R)
+                               (validator: (T, R) => ValidationResult)
   : ValidationResult = {
 
     meta match {

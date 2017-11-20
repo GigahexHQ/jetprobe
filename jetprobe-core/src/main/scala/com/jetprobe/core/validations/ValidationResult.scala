@@ -21,7 +21,7 @@ object ValidationResult {
   def failed(rule : ValidationRule[_], message : String) : ValidationResult = ValidationResult(rule.name,Failed,message,(rule.fullName,rule.line))
 
   def skipped(rule: ValidationRule[_], cause: String): ValidationResult = {
-    val msg = s"Skipped Cause : $cause"
+    val msg = s"Validation at ${rule.fullName.value}:${rule.line.value} was skipped. Cause : $cause"
     ValidationResult(rule.name,Skipped, msg, (rule.fullName,rule.line))
   }
 

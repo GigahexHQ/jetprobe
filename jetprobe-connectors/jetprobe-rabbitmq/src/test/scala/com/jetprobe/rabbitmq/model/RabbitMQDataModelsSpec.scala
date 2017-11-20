@@ -10,13 +10,13 @@ class RabbitMQDataModelsSpec extends FlatSpec with BeforeAndAfter{
   behavior of "ExchangeProps case class"
 
   it should "right props 1" in {
-    val exchangeProps = ExchangeProps("amqp.topic","topic",true,true)
+    val exchangeProps = ExchangeProps("amqp.topic","vhost","topic",true,true)
     assert(exchangeProps.durable)
     assert(!exchangeProps.isAutoDelete)
   }
 
   it should "fetch props 2" in {
-    val exchangeProps = ExchangeProps("amqp.topic","topic",true,true)
+    val exchangeProps = ExchangeProps("amqp.topic","vhost","topic",true,true)
     assert(exchangeProps.durable)
     assert(!exchangeProps.isAutoDelete)
   }
@@ -24,7 +24,7 @@ class RabbitMQDataModelsSpec extends FlatSpec with BeforeAndAfter{
   behavior of "QueueProps case class"
 
   it should "fetch right props" in {
-    val qprops = QueueProps("q1",false,true)
+    val qprops = QueueProps("q1","",false,true)
     assert(!qprops.durable)
     assert(qprops.name.startsWith("q1"))
   }

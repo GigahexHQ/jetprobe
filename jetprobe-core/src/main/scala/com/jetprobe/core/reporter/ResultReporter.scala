@@ -9,11 +9,12 @@ trait ResultReporter {
 
   def report(scenario : String, className : String, results : Seq[ValidationResult]) : Unit = ???
 
-  def write(report : Seq[ValidationReport]) : Unit = ???
+  def write(reports : Seq[ValidationReport]) : Unit = ???
 
 }
 
 case class ValidationReport(suite : String,
+                            className : String,
                             failedCount : Int,
                             successCount : Int,
                             skippedCount : Int,

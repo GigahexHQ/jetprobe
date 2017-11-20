@@ -2,6 +2,7 @@ package com.jetprobe.core.controller
 
 import akka.actor.{ActorSystem, PoisonPill, Props}
 import com.jetprobe.core.action.BaseActor
+import com.jetprobe.core.common.DefaultConfigs
 import com.jetprobe.core.controller.ControllerCommand.{ShutdownCmd, Start}
 import com.jetprobe.core.reporter.{ConsoleReportWriter, HtmlReportWriter, ValidationReport}
 import com.jetprobe.core.session.{Session, UserMessage}
@@ -23,6 +24,7 @@ class Controller extends BaseActor with LazyLogging {
     case UserMessage(session, timestamp) =>
       //logger.info(s"Total time taken for ${session.testName} : ${(timestamp - session.startDate) / 1000f} sec")
       val reporter = new ConsoleReportWriter
+
       val status = if (session.validationResuls.count(_.status == Passed) == session.validationResuls.size) {
         Passed
       } else if (session.validationResuls.filter(_.status == Skipped).size > 0) {
@@ -30,6 +32,7 @@ class Controller extends BaseActor with LazyLogging {
       } else Failed
 
       val finalReport = ValidationReport(session.testName,
+        session.className,
         session.validationResuls.count(_.status == Failed),
         session.validationResuls.count(_.status == Passed),
         session.validationResuls.count(_.status == Skipped),
@@ -41,9 +44,10 @@ class Controller extends BaseActor with LazyLogging {
       // Add the
       reports.+=(finalReport)
 
-      reporter.report(session.testName, session.className, session.validationResuls)
       finished = finished + 1
       if (finished == total) {
+        reporter.write(reports)
+        logger.info(s"Generating HTML report, located at ${session.attributes.get(DefaultConfigs.htmlReportAttr).get}")
         val htmlReporter = new HtmlReportWriter(session.attributes)
         htmlReporter.write(reports)
         self ! ShutdownCmd

@@ -25,7 +25,7 @@ class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
   private val defaultCssPaths = Seq("css/materialize.min.css", "css/style.css")
 
   override def write(reports: Seq[ValidationReport]): Unit = {
-    val filePath = config.getOrElse("report.outputPath", ".")
+
     val cssPaths = config.get("report.cssPaths") match {
       case Some(path) => path.toString.split(",").toSeq
       case None => defaultCssPaths
@@ -215,7 +215,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons passed")("check_circle"),
-              s"${testName}"),
+              s"${vrs.count(_.status == Passed)} Validations for ${testName}"),
             //details of the test
             div(cls := "collapsible-body")(
               p("All tests passed")
@@ -227,7 +227,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons skipped")("info"),
-              s"${testName}"),
+              s"${vrs.count(_.status == Skipped)} Validations for ${testName}"),
             div(cls := "collapsible-body")(
               for (skippedTest <- vrs.filter(_.status == Skipped)) yield {
                 p(s"${skippedTest.message}")
@@ -240,7 +240,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons failed")("cancel"),
-              s"${testName}"),
+              s"${vrs.count(_.status == Failed)} Validationss for ${testName}"),
             div(cls := "collapsible-body")(
               for (failedTest <- vrs.filter(_.status == Failed)) yield {
                 p(s"${failedTest.message}")

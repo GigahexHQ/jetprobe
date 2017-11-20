@@ -2,6 +2,7 @@ package com.jetprobe.core.runner
 
 import java.io.File
 import java.net.{URL, URLClassLoader}
+
 import scala.collection.JavaConverters._
 import java.io.FileInputStream
 import java.lang.reflect.Modifier
@@ -10,6 +11,7 @@ import java.util.zip.ZipInputStream
 
 import akka.actor.ActorSystem
 import com.jetprobe.core.TestScenario
+import com.jetprobe.core.annotation.TestSuite
 import com.jetprobe.core.common.{ConfigReader, DefaultConfigs, Version}
 import com.jetprobe.core.structure.ExecutableScenario
 import com.typesafe.scalalogging.LazyLogging
@@ -43,10 +45,10 @@ object TestRunner extends LazyLogging with Version {
 
   }
 
-  def getProgramVersion : String = {
-    val progName = System.getProperty("prog.name","jetprobe")
-    val version =  System.getProperty("prog.version")
-    val revision =  System.getProperty("prog.revision")
+  def getProgramVersion: String = {
+    val progName = System.getProperty("prog.name", "jetprobe")
+    val version = System.getProperty("prog.version")
+    val revision = System.getProperty("prog.revision")
     s"$progName $version \nbuild : $revision"
   }
 
@@ -57,7 +59,7 @@ object TestRunner extends LazyLogging with Version {
     while ( {
       entry != null
     }) {
-      if (!entry.isDirectory && entry.getName.endsWith(".class")) {
+      if (!entry.isDirectory && entry.getName.endsWith(".class") && !entry.getName.contains("HttpReqs")) {
         val className = entry.getName.replace('/', '.')
         classNames.add(className.substring(0, className.length - ".class".length))
       }
@@ -79,18 +81,15 @@ object TestRunner extends LazyLogging with Version {
 
     classNames.asScala.foreach(csName => {
       val testBuilder = classLoader.loadClass(csName)
-      println(s"loading class $csName")
-
       val isAbstract = Modifier.isAbstract(testBuilder.getModifiers)
-
-      if (!isAbstract) {
+      if (testBuilder.isAnnotationPresent(classOf[TestSuite]) && !isAbstract) {
         val t = testBuilder.newInstance()
 
         if (t.isInstanceOf[TestScenario]) {
           val m = testBuilder.getDeclaredMethod("buildScenario")
           m.setAccessible(true)
           val result = m.invoke(t).asInstanceOf[ExecutableScenario]
-          val defaultConf: Map[String, Any] = Map("report.outputPath" -> reportPath) ++ DefaultConfigs.staticResourceConfig(appHome)
+          val defaultConf: Map[String, Any] = Map(DefaultConfigs.htmlReportAttr -> reportPath) ++ DefaultConfigs.staticResourceConfig(appHome)
           configFile match {
             case Some(conf) => scenarios.+=(result.copy(className = csName, config = ConfigReader.fromYAML(conf) ++ defaultConf))
             case None => scenarios.+=(result.copy(className = csName, config = defaultConf))

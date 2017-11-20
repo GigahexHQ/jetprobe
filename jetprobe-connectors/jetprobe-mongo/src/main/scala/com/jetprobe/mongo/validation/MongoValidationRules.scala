@@ -72,4 +72,14 @@ case class DocumentsRule[U](expected: U,
 
 }
 
+/************************
+  *  Models for Query
+  ***********************/
+
+class DBQuery(val name : String)
+class CollectionQuery(val database : String, val collection : String)
+class DocQuery(val database : String, val collection: String, val query : String)
+
+
+
 

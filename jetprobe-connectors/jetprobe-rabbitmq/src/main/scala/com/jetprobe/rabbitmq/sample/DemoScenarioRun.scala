@@ -7,7 +7,6 @@ import com.jetprobe.core.runner.Runner
 import com.jetprobe.core.Predef._
 import com.jetprobe.rabbitmq.model.ExchangeProps
 import com.jetprobe.rabbitmq.sink.RabbitMQSink
-import com.jetprobe.rabbitmq.validation.RabbitMQValidationSupport._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -15,9 +14,10 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
+@Deprecated
 object DemoScenarioRun extends App {
 
-  type Add = Int => Int
+  /*type Add = Int => Int
 
   def add(value : sourcecode.Args)(implicit enclosing: sourcecode.Enclosing) = {
     println(enclosing.value + " [" + value.source + "]: " + value.value)
@@ -76,4 +76,4 @@ object DemoScenarioRun extends App {
   Await.result(actorSystem.terminate(), 10.seconds)
   //System.exit(0)
 
-}
+*/}

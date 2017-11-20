@@ -3,14 +3,14 @@ package com.jetprobe.sample
 import com.jetprobe.core.TestScenario
 import com.jetprobe.core.structure.ExecutableScenario
 import com.jetprobe.rabbitmq.sink.RabbitMQSink
-import com.jetprobe.rabbitmq.validation.RabbitMQValidationSupport.{checkExchange, checkQueue}
-import com.jetprobe.rabbitmq.validation.RabbitMQValidationSupport._
+import com.jetprobe.rabbitmq.validation.RabbitMQValidationSupport
+
 import scala.concurrent.duration._
 
 /**
   * @author Shad.
   */
-class AnotherScn extends TestScenario {
+class AnotherScn extends TestScenario with RabbitMQValidationSupport{
 
   val rabbit = RabbitMQSink("${rabbit.host}")
 

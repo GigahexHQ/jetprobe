@@ -38,7 +38,7 @@ class MongoValidator extends ValidationExecutor[MongoSink] with LazyLogging {
           val dbStatsResults = extractDBStatsRules(rules, config, mongoClient)
           val collectionStatsResults = extractCollectionStatsRules(rules, config, mongoClient)
           val docsValidationResult = runDocsValidation(rules, config, sink.host)
-          runCommonValidation(rules, serverStats, dblist, dbStatsResults, collectionStatsResults) ++ docsValidationResult
+          runCommonValidation(rules, serverStats, dblist, dbStatsResults, collectionStatsResults,config) ++ docsValidationResult
 
         case None => throw new Exception("Parser error for mongo client. Check the config.")
       }
@@ -150,36 +150,38 @@ object MongoValidator {
     * @tparam U The type of the validation rule
     * @return
     */
-  def runValidation[T, U](meta: Future[Either[Error, T]], rule: ValidationRule[_]): Future[ValidationResult] = {
+  def runValidation[T, U](meta: Future[Either[Error, T]], rule: ValidationRule[_],config: Map[String,Any]): Future[ValidationResult] = {
     meta.map {
       case Left(error) => ValidationResult.skipped(rule,error.getMessage)
       case Right(fetchedMeta) =>
         fetchedMeta match {
           case ss: ServerStats => runServerStatsValidator(ss, rule.asInstanceOf[ServerStatsRule[_]])
-          case ds: DBStats => runDbStatsValidation(ds, rule.asInstanceOf[DBStatsRule[_]])
+          case ds: DBStats => runDbStatsValidation(ds, rule.asInstanceOf[DBStatsRule[_]],config)
           case dbList: DatabaseList => runDBListValidation(dbList, rule.asInstanceOf[DatabaseListRule[_]])
-          case collStats: CollectionStats => runCollStatsValidation(collStats, rule.asInstanceOf[CollectionStatsRule[_]])
+          case collStats: CollectionStats => runCollStatsValidation(collStats, rule.asInstanceOf[CollectionStatsRule[_]],config)
 
         }
 
     }
   }
 
-  private[mongo] def runCollStatsValidation(collStats: CollectionStats, rule: CollectionStatsRule[_]): ValidationResult = {
+  private[mongo] def runCollStatsValidation(collStats: CollectionStats, rule: CollectionStatsRule[_],config: Map[String,Any]): ValidationResult = {
     rule.actual(collStats) == rule.expected match {
       case true => ValidationResult.success(rule)
       case false =>
-        val failureMessage = rule.onFailure(rule.actual(collStats), rule.expected)
+        val condition = s"database = ${ExpressionParser.parse(rule.db.value,config).get} " +
+          s"and collection = ${ExpressionParser.parse(rule.collection.value,config).get}"
+        val failureMessage = rule.onFailure(rule.actual(collStats), rule.expected,condition)
         ValidationResult.failed(rule,failureMessage)
     }
   }
 
-  private[mongo] def runDbStatsValidation(dBStats: DBStats, rule: DBStatsRule[_]): ValidationResult = {
+  private[mongo] def runDbStatsValidation(dBStats: DBStats, rule: DBStatsRule[_],config: Map[String,Any]): ValidationResult = {
     rule.actual(dBStats) == rule.expected match {
       case true => ValidationResult.success(rule)
       case false =>
-        val failureMessage = getFailureMessage(rule.name, rule.actual(dBStats),
-          rule.expected, rule.fullName.value, rule.line.value)
+        val condition = s"database = ${ExpressionParser.parse(rule.database.value,config).get} "
+        val failureMessage = rule.onFailure(rule.actual(dBStats),rule.expected,condition)
         ValidationResult.failed(rule,failureMessage)
     }
   }
@@ -192,8 +194,7 @@ object MongoValidator {
       ValidationResult.success(statsRule)
     }
     else {
-      val failureMessage = s"${statsRule.name} failed at ${statsRule.fullName.value} : ${statsRule.line.value}. Expected = $expected , Actual = $actual"
-      ValidationResult.failed(statsRule,failureMessage)
+      ValidationResult.failed(statsRule,statsRule.onFailure(expected,actual,s"database = ${statsRule.database}"))
     }
   }
 
@@ -201,16 +202,17 @@ object MongoValidator {
                                          ss: ParsedResult[ServerStats],
                                          dblist: ParsedResult[DatabaseList],
                                          dbStatsRes: Map[String, Option[ParsedResult[DBStats]]],
-                                         dbCollRes: Map[(String, String), Option[ParsedResult[CollectionStats]]]): Seq[ValidationResult] = {
+                                         dbCollRes: Map[(String, String), Option[ParsedResult[CollectionStats]]],
+                                         config : Map[String,Any]): Seq[ValidationResult] = {
     val futureValidation = rules.filterNot(_.isInstanceOf[DocumentsRule[_]]) map {
-      case validationRule: ServerStatsRule[_] => runValidation[ServerStats, ServerStatsRule[_]](ss, validationRule)
-      case dbListRule: DatabaseListRule[_] => runValidation[DatabaseList, DatabaseListRule[_]](dblist, dbListRule)
+      case validationRule: ServerStatsRule[_] => runValidation[ServerStats, ServerStatsRule[_]](ss, validationRule,config)
+      case dbListRule: DatabaseListRule[_] => runValidation[DatabaseList, DatabaseListRule[_]](dblist, dbListRule,config)
       case dbStatRule: DBStatsRule[_] => dbStatsRes.getOrElse(dbStatRule.database.value, None) match {
-        case Some(dbStatsResult) => runValidation[DBStats, DBStatsRule[_]](dbStatsResult, dbStatRule)
+        case Some(dbStatsResult) => runValidation[DBStats, DBStatsRule[_]](dbStatsResult, dbStatRule,config)
         case None => Future(ValidationResult.skipped(dbStatRule, s"Parser error for database : ${dbStatRule.database.value}"))
       }
       case dbCollRule: CollectionStatsRule[_] => dbCollRes.getOrElse((dbCollRule.db.value, dbCollRule.collection.value), None) match {
-        case Some(collResult) => runValidation[CollectionStats, CollectionStatsRule[_]](collResult, dbCollRule)
+        case Some(collResult) => runValidation[CollectionStats, CollectionStatsRule[_]](collResult, dbCollRule,config)
         case None => Future(
           ValidationResult.skipped(dbCollRule, s"Parser error for database : ${dbCollRule.db.value} & collection : ${dbCollRule.collection.value}")
         )
