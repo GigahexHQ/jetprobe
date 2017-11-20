@@ -11,6 +11,11 @@ publishTo := Some(
 )
 sonatypeProfileName := "com.jetprobe"
 
+lazy val root = Project("jetprobe", file("."))
+  .dependsOn(Seq(core,rabbitConnector,mongoConnector,consulConnector).map(_ % "compile->compile;test->test"): _*)
+  .settings(basicSettings: _*)
+  .enablePlugins(JavaAppPackaging)
+
 def jetProbeModule(id: String) = Project(id, base = file(id))
 
 def jetProbeConnector(id: String) = Project(id, base = file("jetprobe-connectors/" + id))
