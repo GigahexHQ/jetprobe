@@ -8,6 +8,7 @@ import com.jetprobe.core.validations._
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
 import scalatags.Text.tags2.nav
+import DefaultConfigs._
 
 /**
   * @author Shad.
@@ -16,11 +17,11 @@ class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
 
   import HtmlReportWriter._
 
-  private val defaultJsPaths = Seq("js/jquery.min.js",
+  /*private val defaultJsPaths = Seq("js/jquery.min.js",
     "js/materialize.min.js",
     "js/progressbar.min.js",
     "js/init.js"
-  )
+  )*/
 
   private val defaultCssPaths = Seq("css/materialize.min.css", "css/style.css")
 
@@ -30,9 +31,9 @@ class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
       case Some(path) => path.toString.split(",").toSeq
       case None => defaultCssPaths
     }
-    val jsPaths = config.get("report.jsPaths") match {
+    val jsPaths = config.get(jsPathAttr) match {
       case Some(path) => path.toString.split(",").toSeq
-      case None => defaultJsPaths
+      case None => defaultJsPaths.split(",").toSeq
     }
 
     val statsBar = validationStats(reports)

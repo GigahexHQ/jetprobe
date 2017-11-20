@@ -23,7 +23,7 @@ class ConsulServiceValidator extends ValidationExecutor[ConsulService]{
         val client = new ConsulClient(clientProps(sink.host.value),clientProps(sink.port.value).toInt)
         val mayBeService = ConsulServiceValidator.getServiceInfo(rules,client)
         rules.map {
-          case vr : ServiceValidationRule[_] => ConsulServiceValidator.validateServiceInfo(vr,mayBeService(vr.name))
+          case vr : ServiceValidationRule[_] => ConsulServiceValidator.validateServiceInfo(vr,mayBeService(vr.service))
         }
         /*rules.map{ vr =>
           case vr : ServiceValidationRule[_] => ConsulServiceValidator.validateServiceInfo(vr,mayBeService(vr.name))
@@ -46,7 +46,7 @@ object ConsulServiceValidator {
       case (k,v) =>
        val tryService = try{
           val serviceHealth = client.getHealthServices(k,true,QueryParams.DEFAULT)
-          if(serviceHealth.getValue.size() == 0 ) Left(new Exception(s"Service ${k} not found"))
+          if(serviceHealth.getValue.size() == 0 ) throw new Exception(s"Service ${k} not found")
           else{
             val singleVal = serviceHealth.getValue.get(0)
             Right(ServiceInfo(k,singleVal.getService.getAddress,singleVal.getService.getPort))
