@@ -7,12 +7,13 @@ import com.jetprobe.core.http.HttpDSL
   * @author Shad.
   */
 trait StructureBuilder[B <: StructureBuilder[B]]
-    extends Execs[B]
+  extends Execs[B]
     with Feeds[B]
     with Ingests[B]
     with HttpDSL[B]
     with Pauses[B]
-with Validations[B]{
+    with SecureShell[B]
+    with Validations[B] {
 
   private[jetprobe] def build(ctx: ScenarioContext,
                               chainNext: Action): Action = {

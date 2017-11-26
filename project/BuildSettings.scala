@@ -12,7 +12,7 @@ object BuildSettings {
     organization := "com.jetprobe",
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    version := "0.2.0-SNAPSHOT",
+    version := "0.2.0",
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq("2.12.2", "2.11.8"),
     publishMavenStyle := true,
@@ -27,7 +27,8 @@ object BuildSettings {
       "shad.amezng@gmail.com",
       url("https://github.com/amezng"))),
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    pomIncludeRepository := (_ => false)
+    pomIncludeRepository := (_ => false),
+    logLevel := Level.Error
   )
 
 }

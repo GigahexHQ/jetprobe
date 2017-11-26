@@ -13,5 +13,4 @@ trait HttpDSL[B] extends Execs[B] {
   def http(requestBuilder: HttpRequestBuilder) : B = exec(new HttpRequestActionBuilder(requestBuilder))
 
 
-
 }

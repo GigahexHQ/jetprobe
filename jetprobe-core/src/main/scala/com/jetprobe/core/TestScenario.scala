@@ -11,3 +11,5 @@ trait TestScenario extends CoreDsl{
   def buildScenario : ExecutableScenario
 
 }
+
+abstract class JTestScenario extends TestScenario

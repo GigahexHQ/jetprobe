@@ -1,9 +1,11 @@
 package com.jetprobe.core.action
 
 import akka.actor.{ActorSystem, Props}
+import com.jetprobe.core.http.validation.FetchedResponse
 import com.jetprobe.core.session.Session
+import com.jetprobe.core.sink.DataSource
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
   * @author Shad.
@@ -17,3 +19,5 @@ class Pause(duration : FiniteDuration, system : ActorSystem, next : Action) exte
     system.scheduler.scheduleOnce(duration,delegator,ExecuteCommand)
   }
 }
+
+case class PauseBuilder[T <: DataSource](stateBuilder : () => T , rule : T => Boolean)

@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-@TestSuite
+//@TestSuite
 class MyTestScenario extends TestScenario with RabbitMQValidationSupport with MongoValidationSupport with HttpValidationSupport with ConsulValidationSupport{
 
   //Declare the rabbitmq connection
