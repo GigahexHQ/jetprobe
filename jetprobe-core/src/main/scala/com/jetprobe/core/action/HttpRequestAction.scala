@@ -8,62 +8,122 @@ import com.jetprobe.core.session.Session
 import org.asynchttpclient._
 import ExpressionParser._
 import HttpRequestAction._
+import akka.actor.{ActorRef, Props}
+
 import scala.util.{Failure, Success, Try}
 
 /**
   * @author Shad.
   */
-class HttpRequestAction(httpRequestBuilder: HttpRequestBuilder, val next: Action) extends Action {
-  override def name: String = "httpRequestAction-" + httpRequestBuilder.uri
+class HttpRequestAction(httpExecutor: ActorRef,httpRequestBuilder: HttpRequestBuilder) extends Action {
 
-  override def execute(session: Session): Unit = {
+  override def name: String = "httpRequestAction"
 
-    logger.debug(s"session while triggering http action : ${session.attributes}")
-    val exprParser = new ExpressionParser(session.attributes)
-    val parsedReq = parseHttpRequest(httpRequestBuilder, session.attributes)
+  override def execute(session: Session): Unit = httpExecutor ! HttpRequestMessage(httpRequestBuilder)
 
-    parsedReq match {
-      case Some(httpRequest) =>
-        val httpResponse = Try {
-          handleHttpRequests(httpRequest, httpRequest.uri)
-        }
+  /* override def execute(session: Session): Unit = {
 
-        httpResponse match {
-          case Failure(ex) =>
-            logger.error(s"Http Request : [${httpRequest.uri}] failed with exception : ${ex}")
-            next ! session
+     val exprParser = new ExpressionParser(session.attributes)
+     val parsedReq = parseHttpRequest(httpRequestBuilder, session.attributes)
 
-          case Success(response) =>
-            //logger.info(s"received response : ${response.body.string}")
-            logger.info(s"Response status : ${response.statusCode.get}. Http Request [${httpRequestBuilder.method.toString}]: ${httpRequest.uri}")
-            if(response.statusCode.get == 400 || response.statusCode.get == 404)
-              logger.error(s"Error response : ${response.body.string}")
-            val savedVariables = httpRequest.responseInfoExtractor match {
+     parsedReq match {
+       case Some(httpRequest) =>
+         val httpResponse = Try {
+           handleHttpRequests(httpRequest, httpRequest.uri)
+         }
 
-              case Some(extractors) => extractors.flatMap(jsonBuilder =>
-                jsonBuilder.extractFrom(response.body.string)).toMap
+         httpResponse match {
+           case Failure(ex) =>
+             logger.error(s"Http Request : [${httpRequest.uri}] failed with exception : ${ex}")
+             next ! session
 
-              case None =>
-                Map.empty[String, Any]
-            }
+           case Success(response) =>
+             //logger.info(s"received response : ${response.body.string}")
+             logger.info(s"Response status : ${response.statusCode.get}. Http Request [${httpRequestBuilder.method.toString}]: ${httpRequest.uri}")
+             if(response.statusCode.get == 400 || response.statusCode.get == 404)
+               logger.error(s"Error response : ${response.body.string}")
+             val savedVariables = httpRequest.responseInfoExtractor match {
 
-            val updatedSession = session.copy(attributes = session.attributes ++ savedVariables)
+               case Some(extractors) => extractors.flatMap(jsonBuilder =>
+                 jsonBuilder.extractFrom(response.body.string)).toMap
 
-            next ! updatedSession
+               case None =>
+                 Map.empty[String, Any]
+             }
+
+             val updatedSession = session.copy(attributes = session.attributes ++ savedVariables)
+
+             next ! updatedSession
 
 
-        }
+         }
 
-      case None =>
-        logger.error(s"Failed parsing of the request : [${httpRequestBuilder.requestName}]. The Http Action would be skipped.")
-        next ! session
-    }
+       case None =>
+         logger.error(s"Failed parsing of the request : [${httpRequestBuilder.requestName}]. The Http Action would be skipped.")
+         next ! session
+     }
 
-  }
+   }*/
 
 }
 
+class HttpExecutor(val next : Action) extends ActionActor {
+
+  override def execute(actionMessage: ActionMessage, session: Session): Unit = actionMessage match {
+    case HttpRequestMessage(reqBuilder) =>
+      val exprParser = new ExpressionParser(session.attributes)
+      val parsedReq = parseHttpRequest(reqBuilder, session.attributes)
+
+      parsedReq match {
+        case Some(httpRequest) =>
+          val httpResponse = Try {
+            handleHttpRequests(httpRequest, httpRequest.uri)
+          }
+
+          httpResponse match {
+            case Failure(ex) =>
+              logger.error(s"Http Request : [${httpRequest.uri}] failed with exception : ${ex}")
+              next ! session
+
+            case Success(response) =>
+              //logger.info(s"received response : ${response.body.string}")
+              logger.info(s"Response status : ${response.statusCode.get}. Http Request [${reqBuilder.method.toString}]: ${httpRequest.uri}")
+              if(response.statusCode.get == 400 || response.statusCode.get == 404)
+                logger.error(s"Error response : ${response.body.string}")
+              val savedVariables = httpRequest.responseInfoExtractor match {
+
+                case Some(extractors) => extractors.flatMap(jsonBuilder =>
+                  jsonBuilder.extractFrom(response.body.string)).toMap
+
+                case None =>
+                  Map.empty[String, Any]
+              }
+
+              val updatedSession = session.copy(attributes = session.attributes ++ savedVariables)
+
+              next ! updatedSession
+
+
+          }
+
+        case None =>
+          logger.error(s"Failed parsing of the request : [${reqBuilder.requestName}]. The Http Action would be skipped.")
+          next ! session
+      }
+  }
+}
+
+object HttpExecutor {
+
+  def props(next : Action) : Props = Props(new HttpExecutor(next))
+}
+
 object HttpRequestAction {
+
+  case class HttpRequestMessage(reqBuilder : HttpRequestBuilder) extends ActionMessage {
+
+    override def name: String = s"Http request : ${reqBuilder.requestName}"
+  }
 
   private[action] def parseHttpRequest(rb: HttpRequestBuilder, attributes: Map[String, Any]): Option[HttpRequestBuilder] = {
 

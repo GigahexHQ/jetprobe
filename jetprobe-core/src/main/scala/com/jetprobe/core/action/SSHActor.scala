@@ -1,37 +1,18 @@
 package com.jetprobe.core.action
 
 import akka.actor.Props
-import com.jetprobe.core.action.SSHAction.SSHMessage
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
 import java.util.concurrent.TimeUnit
 
+import com.jetprobe.core.action.SSHActor.SSHMessage
+import com.jetprobe.core.session.Session
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 
 /**
   * @author Shad.
   */
-class SSHActor(actionDef: SSHActionDef) extends BaseActor {
-
-  override def receive: Receive = {
-    case SSHMessage(config, session, next) =>
-
-
-      val sshClient = new SSHClient()
-      try{
-        sshClient.addHostKeyVerifier(new PromiscuousVerifier)
-        sshClient.connect(config.hostName)
-        sshClient.authPassword(config.user, config.password)
-        run(actionDef, sshClient)
-        next ! session
-      }catch {
-        case ex : Exception =>
-          logger.error(ex.getMessage)
-          next ! session
-      }
-
-
-  }
+class SSHActor(val next : Action) extends ActionActor {
 
   def run(actionDef: SSHActionDef, ssh: SSHClient): Unit = {
 
@@ -46,15 +27,43 @@ class SSHActor(actionDef: SSHActionDef) extends BaseActor {
           } finally session.close
         } finally ssh.disconnect
 
-
     }
 
 
   }
+
+  override def execute(actionMessage: ActionMessage, session: Session): Unit = actionMessage match {
+    case SSHMessage(actionDef,config, next) =>
+
+      val sshClient = new SSHClient()
+        sshClient.addHostKeyVerifier(new PromiscuousVerifier)
+        sshClient.connect(config.hostName)
+        sshClient.setConnectTimeout(5)
+        sshClient.authPassword(config.user, config.password)
+        run(actionDef, sshClient)
+        next ! session
+
+  }
 }
+
+trait SSHActionDef
+
+case class SshCopy(from: String, to: String) extends SSHActionDef
+
+case class ExecuteCmd(cmd: String) extends SSHActionDef
+
+case class SSHConfig(hostName: String,
+                     user: String,
+                     password: String)
 
 object SSHActor {
 
-  def props(actionDef: SSHActionDef): Props = Props(new SSHActor(actionDef))
+  case class SSHMessage(actionDef: SSHActionDef,sshConfig: SSHConfig, next: Action) extends ActionMessage {
+
+    override def name: String = s"SSH Action at host : ${sshConfig.hostName}"
+  }
+
+
+  def props(next : Action): Props = Props(new SSHActor(next))
 
 }

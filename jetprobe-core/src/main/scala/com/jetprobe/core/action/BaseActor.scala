@@ -16,6 +16,7 @@ abstract class BaseActor extends Actor with LazyLogging {
   def scheduler = system.scheduler
   implicit def dispatcher = system.dispatcher
 
+
   override def preStart(): Unit = context.setReceiveTimeout(Duration.Undefined)
 
   override def preRestart(reason: Throwable, message: Option[Any]): Unit =
@@ -24,7 +25,7 @@ abstract class BaseActor extends Actor with LazyLogging {
 
   override def unhandled(message: Any): Unit =
     message match {
-      case Terminated(dead) => super.unhandled(message)
+      case Terminated(dead) => logger.error(s"Unhandled message : ${message}")
       case unknown          => throw new IllegalArgumentException(s"Actor $this doesn't support message $unknown")
     }
 
