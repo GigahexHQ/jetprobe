@@ -18,12 +18,12 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-//@TestSuite
-class MyTestScenario extends TestScenario with RabbitMQValidationSupport with MongoValidationSupport with HttpValidationSupport with ConsulValidationSupport{
+@TestSuite
+class MyTestScenario extends TestScenario with RabbitMQValidationSupport with MongoValidationSupport with HttpValidationSupport with ConsulValidationSupport {
 
   //Declare the rabbitmq connection
   val rabbit = RabbitMQSink("${rabbit.host}")
-  val mongo = MongoSink("mongodb://${mongo.host}/hHTk8DHiIKhlTXuU4ewN8V/")
+  val mongo = MongoSink("mongodb://${mongo.host}/")
 
   val getPosts = Http("getPosts")
     .get("https://${server.hostname}/posts/1")
@@ -47,18 +47,21 @@ class MyTestScenario extends TestScenario with RabbitMQValidationSupport with Mo
     .http(insertPost)
     .pause(3.seconds)
     .http(getPosts)
+    .exec(
+      mongo.createCollection(db = "sample", collection = "employee")
+    )
     .pause(1.seconds)
 
     .validate[HttpRequestBuilder](getPosts) {
 
 
-   val responseValiation = Seq(
-     checkHttpResponse(202, _.status)
-   )
+    val responseValiation = Seq(
+      checkHttpResponse(202, _.status)
+    )
     val jsonValidations = given(jsonQuery = "$.userId")(
       checkExtractedValue(true, x => x.startsWith("100"))
     )
-      responseValiation ++ jsonValidations
+    responseValiation ++ jsonValidations
   }
 
     .validate[MongoSink](mongo) {

@@ -4,6 +4,7 @@ import com.jetprobe.core.TestScenario
 import com.jetprobe.core.action.SSHConfig
 import com.jetprobe.core.annotation.TestSuite
 import com.jetprobe.core.structure.ExecutableScenario
+import scala.concurrent.duration._
 
 /**
   * @author Shad.
@@ -15,7 +16,7 @@ class ShellPipe extends TestScenario {
 
   override def buildScenario: ExecutableScenario =
     scenario("shell testing")
-      .ssh(sshConfig, cmd = "cd /home/shad/apps && mkdir temp && ls")
+      .ssh(sshConfig, cmd = "cd /home/shad/apps && ls -lrt")
       .build
 
 }

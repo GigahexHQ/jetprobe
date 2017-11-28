@@ -4,6 +4,7 @@ package com.jetprobe.mongo.sink
 import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
 import com.jetprobe.core.sink.DataSink
+import com.jetprobe.mongo.action._
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.{MongoClient, MongoCollection, MongoDatabase}
 import org.mongodb.scala.bson.collection.mutable.Document
@@ -50,6 +51,15 @@ case class MongoSink private(val db: Expr, val collection: Expr, val host: Expr,
 
   }
 
+  //Utility methods for creating action builders
+  def createDatabase(db : String) : MongoDBActionBuilder = new MongoDBActionBuilder(CreateDatabase(db),this)
+  def createCollection(db : String,collection : String,indexFields : Seq[String] = Seq.empty) : MongoDBActionBuilder =
+    new MongoDBActionBuilder(CreateCollection(db,collection,indexFields),this)
+  def dropDatabase(db : String) : MongoDBActionBuilder = new MongoDBActionBuilder(DropDatabase(db),this)
+  def dropCollection(db : String,collection : String) : MongoDBActionBuilder = new MongoDBActionBuilder(DropCollection(db,collection),this)
+  def removeAllDocuments(db : String,collection : String) : MongoDBActionBuilder = new MongoDBActionBuilder(RemoveAllDocuments(db,collection),this)
+  def insertDocuments(db : String, collection : String,rows : Seq[String]) : MongoDBActionBuilder = new MongoDBActionBuilder(InsertRows(db,collection,rows.toIterator),this)
+
 }
 
 object MongoSink {
@@ -64,6 +74,8 @@ object MongoSink {
     val collection = if (splitUri.length > 2) Expr(splitUri(2)) else Expr("")
     MongoSink(database, collection, Expr(hostname))
   }
+
+
 
   def getMongoClient(host : Expr,config : Map[String,Any]) : Option[MongoClient] = {
     ExpressionParser.parse(host.value, config)
