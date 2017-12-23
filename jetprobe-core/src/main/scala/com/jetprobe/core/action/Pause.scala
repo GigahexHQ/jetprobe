@@ -1,6 +1,7 @@
 package com.jetprobe.core.action
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
+import com.jetprobe.core.runner.ScenarioManager.{ExecuteNext, ExecuteWithDelay}
 import com.jetprobe.core.session.Session
 
 import scala.concurrent.duration._
@@ -8,12 +9,15 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-class Pause(duration : FiniteDuration, system : ActorSystem, next : Action) extends Action{
+class Pause(duration : FiniteDuration, next : Action,actorSystem : ActorSystem,scenarioController : ActorRef) extends Action{
+
+  import actorSystem.dispatcher
+
   override def name: String = "pause for "
-  import system.dispatcher
 
   override def execute(session: Session): Unit = {
-    val delegator = system.actorOf(Props(new ActionDelegatorActor(next,session)))
-    system.scheduler.scheduleOnce(duration,delegator,ExecuteCommand)
+    logger.info(s"Pausing for the duration ${duration.length}")
+    actorSystem.scheduler.scheduleOnce(duration,scenarioController,ExecuteNext(next,session,true))
+    //scenarioController ! ExecuteWithDelay(next,duration)
   }
 }

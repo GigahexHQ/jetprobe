@@ -3,6 +3,7 @@ package com.jetprobe.core.http
 import java.io.File
 
 import com.jetprobe.core.extractor.JsonPathBuilder
+import com.jetprobe.core.http.validation.HttpRequestConditions
 import com.jetprobe.core.sink.DataSource
 
 import scala.collection.mutable
@@ -17,7 +18,7 @@ case class HttpRequestBuilder(
                                method : RequestType,
                                body: Option[String] = None,
                                responseInfoExtractor: Option[Seq[JsonPathBuilder]] = None
-                             ) extends DataSource{
+                             ) extends DataSource with HttpRequestConditions{
 
   def body(bd: String): HttpRequestBuilder = {
     //println(bd)

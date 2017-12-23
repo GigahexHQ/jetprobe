@@ -7,27 +7,62 @@ import com.jetprobe.rabbitmq.sink.RabbitMQSink
 import com.rabbitmq.http.client.Client
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * @author Shad.
   */
 class RabbitMQValidator extends ValidationExecutor[RabbitMQSink] with LazyLogging {
 
-  import RabbitMQValidator._
+
+  private[this] def handleExchangeRule(rule : ExchangeValidationRule,client : Client,config : Map[String,Any]) : ValidationResult = {
+      val parsedVals = ExpressionParser.parseAll(Seq(rule.vHost,rule.exchangeName),config)
+      parsedVals match {
+        case Left(exception) => ValidationResult.failed(rule, exception.getMessage)
+        case Right(props) =>
+          val parsedRule = rule.copy(exchangeName = Expr(props(rule.exchangeName.value)),vHost = Expr(props(rule.vHost.value)))
+          val exchangeProps = parsedRule.fetch(client)
+          validateResponse[ExchangeProps](exchangeProps,rule.fnAssertion)
+      }
+  }
+
+  def handleQueueRule(rule: QueueValidationRule, client: Client, config: Map[String, Any]): ValidationResult = {
+    val parsedVals = ExpressionParser.parseAll(Seq(rule.vhost,rule.queueName),config)
+    parsedVals match {
+      case Left(exception) => ValidationResult.failed(rule, exception.getMessage)
+      case Right(props) =>
+        val parsedRule = rule.copy(queueName = Expr(props(rule.queueName.value)),vhost = Expr(props(rule.vhost.value)))
+        val queueProps = parsedRule.fetch(client)
+        validateResponse[QueueProps](queueProps,rule.fnAssertion)
+    }
+
+
+  }
 
   override def execute(rules: Seq[ValidationRule[RabbitMQSink]], sink: RabbitMQSink, config: Map[String, Any]): Seq[ValidationResult] = {
-
     try {
+
+      sink.copy(config = config).client match {
+        case Some(rabbit) =>
+          rules.map {
+            case rule : ExchangeValidationRule => handleExchangeRule(rule,rabbit,config)
+            case rule : QueueValidationRule => handleQueueRule(rule,rabbit,config)
+
+          }
+        case None =>
+          throw new Exception("Unable to build http client for RabbitMQ")
+
+      }
+    }catch {
+      case ex: Exception => rules.map(rule => ValidationResult.skipped(rule, ex.getMessage))
+    }
+
+    /*try {
       val groupedExchangeRules = rules.filter(rule => rule.isInstanceOf[ExchangeValidationRule[_]]).groupBy {
-        case r: ExchangeValidationRule[_] => (r.vHost, r.exchangeName)
+        case r: ExchangeValidationRule => (r.vHost, r.exchangeName)
       }
 
       val groupedQueueRules = rules.filter(rule => rule.isInstanceOf[QueueValidationRule[_]]).groupBy {
-        case r: QueueValidationRule[_] => (r.vhost, r.queueName)
+        case r: QueueValidationRule => (r.vhost, r.queueName)
       }
       sink.copy(config = config).client match {
         case Some(client) =>
@@ -47,7 +82,7 @@ class RabbitMQValidator extends ValidationExecutor[RabbitMQSink] with LazyLoggin
     } catch {
       case ex: Exception => rules.map(x => ValidationResult.skipped(getRuleWithName(x,config), ex.getMessage))
     }
-
+*/
   }
 }
 
@@ -58,35 +93,35 @@ object RabbitMQValidator extends LazyLogging {
 
   type Props[T] = Map[(String, String), Either[Exception, T]]
 
-  private[rabbitmq] def getRuleWithName(rule : ValidationRule[RabbitMQSink],config : Map[String,Any]) : ValidationRule[RabbitMQSink] = rule match {
-    case rule : ExchangeValidationRule[_] =>
+  /*private[rabbitmq] def getRuleWithName(rule : ValidationRule[RabbitMQSink],config : Map[String,Any]) : ValidationRule[RabbitMQSink] = rule match {
+    case rule : ExchangeValidationRule =>
       val ruleName = s"Exchange : ${parse(rule.exchangeName.value,config).getOrElse(rule.exchangeName.value)} " +
         s"in vhost : ${parse(rule.vHost.value,config).getOrElse(rule.vHost.value)} "
       rule.copy(name = ruleName)
 
-    case rule : QueueValidationRule[_] =>
+    case rule : QueueValidationRule =>
       val ruleName = s"Queue : ${parse(rule.queueName.value,config).getOrElse(rule.queueName.value)} " +
         s"in vhost : ${parse(rule.vhost.value,config).getOrElse(rule.vhost.value)} "
       rule.copy(name = ruleName)
-  }
+  }*/
 
-  def executeValidations(rules: Seq[ValidationRule[RabbitMQSink]],
+  /*def executeValidations(rules: Seq[ValidationRule[RabbitMQSink]],
                          exchangeProps: Props[ExchangeProps],
                          queueProps: Props[QueueProps]): Future[Seq[ValidationResult]] = {
     val validationResults = rules.map {
       //Validation for the Exchange
-      case r: ExchangeValidationRule[_] =>
+      case r: ExchangeValidationRule =>
         val exchangeInfo = exchangeProps(r.vHost.value, r.exchangeName.value)
         runExchangeValidation(exchangeInfo, getRuleWithName(r,_config).asInstanceOf[ExchangeValidationRule[_]])
       //Validation for the Queue
-      case r: QueueValidationRule[_] =>
+      case r: QueueValidationRule =>
         runQueueValidation(queueProps(r.vhost.value, r.queueName.value), getRuleWithName(r,_config).asInstanceOf[QueueValidationRule[_]])
     }
     Future.sequence(validationResults)
 
-  }
+  }*/
 
-  def getExchangeProps(client: Client, exchange: Expr, vHost: Expr, config: Map[String, Any]): Either[Exception, ExchangeProps] = {
+  /*def getExchangeProps(client: Client, exchange: Expr, vHost: Expr, config: Map[String, Any]): Either[Exception, ExchangeProps] = {
 
     try {
       _config = config
@@ -96,17 +131,7 @@ object RabbitMQValidator extends LazyLogging {
         case Right(parsedVals) =>
           val parsedExchange = parsedVals(exchange.value)
           val parsedVHost = parsedVals(vHost.value)
-          logger.info("Config passed in the exchange.")
-          _config.foreach {
-            case (k,v)=> println(s"key : $k , value : $v")
-          }
 
-          logger.info("Parsed vals")
-          parsedVals.foreach {
-            case (k,v)=> println(s"parse key : $k , parsed value : $v")
-          }
-
-          logger.info(s"fetching the exchange props for vhost : ${parsedVHost} and exchange : ${parsedExchange}")
           val exchangInfo = client.getExchange(parsedVHost, parsedExchange)
           if (exchangInfo == null) {
             throw new Exception(s"Given Exchange = ${parsedExchange} and vHost = ${parsedVHost} not found. Verify the configurations before proceeding.")
@@ -145,9 +170,9 @@ object RabbitMQValidator extends LazyLogging {
       }
     }
 
-  }
+  }*/
 
-  def runQueueValidation(queueProps: Either[Exception, QueueProps], rule: QueueValidationRule[_]): Future[ValidationResult] = {
+ /* def runQueueValidation(queueProps: Either[Exception, QueueProps], rule: QueueValidationRule[_]): Future[ValidationResult] = {
 
     Future {
       ValidationExecutor.validate[QueueProps](queueProps, rule) {
@@ -190,6 +215,6 @@ object RabbitMQValidator extends LazyLogging {
     }
 
 
-  }
+  }*/
 
 }

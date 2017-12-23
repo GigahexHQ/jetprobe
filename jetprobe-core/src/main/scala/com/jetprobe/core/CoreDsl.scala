@@ -11,6 +11,7 @@ import com.jetprobe.core.structure.ScenarioBuilder
   */
 trait CoreDsl extends DataGeneratorSupport with SinkSupport with HttpSupport{
 
+  import io.circe.parser.decode
   def scenario(scenarioName: String): ScenarioBuilder = ScenarioBuilder(scenarioName)
   //def assert[S](f : S => Boolean) : S => Boolean = f
 
@@ -19,5 +20,6 @@ trait CoreDsl extends DataGeneratorSupport with SinkSupport with HttpSupport{
 
 object Predef extends CoreDsl {
   type Session = com.jetprobe.core.session.Session
+
 
 }

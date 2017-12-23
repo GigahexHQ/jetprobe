@@ -14,7 +14,10 @@ case class ScenarioBuilder(name: String,
   private[core] def newInstance(actionBuilders: List[ActionBuilder]) =
     copy(actionBuilders = actionBuilders)
 
-  def build: ExecutableScenario = ExecutableScenario(this)
+  //def build: ExecutableScenario = ExecutableScenario(this)
+  override def exec(actionBuilder: ActionBuilder): ScenarioBuilder = this.copy(actionBuilders = List(actionBuilder) ::: actionBuilders)
+
+  def build(): ExecutableScenario = ExecutableScenario(this)
 
 }
 
@@ -31,3 +34,9 @@ case class ExecutableScenario(scenarioBuilder: ScenarioBuilder, className : Stri
 }
 
 case class ScenarioContext(system: ActorSystem, controller: ActorRef)
+
+
+trait Sample[T] {
+
+  def getName(s : String) : T = ???
+}

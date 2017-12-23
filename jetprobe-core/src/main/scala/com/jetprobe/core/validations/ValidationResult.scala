@@ -7,22 +7,25 @@ import sourcecode.{FullName, Line}
   */
 case class ValidationResult(testName : String,
                              status: ValidationStatus,
-                            message: String,
-                            sourceCode: (FullName,Line))
+                            message: String = "Validation Passed")
 
 object ValidationResult {
 
   def getFailedMessage(expected : Any, actual : Any) : String = {
     s"Expected = $expected, Actual = $actual"
   }
+  def success() = ValidationResult("Test",Passed, "Passed")
+  def failed(message : String, name : FullName,line : Line) = ValidationResult("Test",Failed, message)
 
-  def success(rule: ValidationRule[_]): ValidationResult = ValidationResult(rule.name,Passed, rule.onSuccess, (rule.fullName,rule.line))
+  def failed(message : String) = ValidationResult("Test",Failed, message)
 
-  def failed(rule : ValidationRule[_], message : String) : ValidationResult = ValidationResult(rule.name,Failed,message,(rule.fullName,rule.line))
+  def success(rule: ValidationRule[_]): ValidationResult = ValidationResult(rule.name,Passed)
+
+  def failed(rule : ValidationRule[_], message : String) : ValidationResult = ValidationResult(rule.name,Failed,message)
 
   def skipped(rule: ValidationRule[_], cause: String): ValidationResult = {
-    val msg = s"Validation at ${rule.fullName.value}:${rule.line.value} was skipped. Cause : $cause"
-    ValidationResult(rule.name,Skipped, msg, (rule.fullName,rule.line))
+    val msg = s"Validation was skipped. Cause : $cause"
+    ValidationResult(rule.name,Skipped, msg)
   }
 
 }

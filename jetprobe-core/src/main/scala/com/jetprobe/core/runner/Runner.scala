@@ -3,7 +3,7 @@ package com.jetprobe.core.runner
 import akka.actor.ActorSystem
 import com.jetprobe.core.action.Exit
 import com.jetprobe.core.controller.Controller
-import com.jetprobe.core.controller.ControllerCommand.Start
+import com.jetprobe.core.controller.ControllerCommand.{ScheduleTestSuites, Start}
 import com.jetprobe.core.structure.ExecutableScenario
 import com.typesafe.scalalogging.StrictLogging
 
@@ -11,15 +11,16 @@ import com.typesafe.scalalogging.StrictLogging
 /**
   * @author Shad.
   */
-class Runner(system: ActorSystem) extends StrictLogging {
+class Runner(system: ActorSystem,hasReport : Boolean) extends StrictLogging {
 
-  def run(pipes: Seq[ExecutableScenario]): Unit = {
+  def run(testSuites: Seq[ExecutableScenario]): Unit = {
     //logger.trace(s"Starting the execution of the scenario : ${scenario.name}")
 
-    val controller = system.actorOf(Controller.props)
+    val controller = system.actorOf(Controller.props(hasReport))
     val onExit = new Exit(controller)
-    val scenarios = pipes.map(_.build(system,onExit,controller))
-    controller ! Start(scenarios)
+    //val scenarios = testSuites.map(_.build(system,onExit,controller))
+    //controller ! Start(scenarios)
+    controller ! ScheduleTestSuites(testSuites)
 
   }
 
@@ -27,5 +28,5 @@ class Runner(system: ActorSystem) extends StrictLogging {
 
 object Runner {
 
-  def apply(report : Boolean = false)(implicit system: ActorSystem) = new Runner(system)
+  def apply(report : Boolean = false)(implicit system: ActorSystem) = new Runner(system,report)
 }

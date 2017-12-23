@@ -10,8 +10,7 @@ import sourcecode.{FullName, Line}
   */
 case class ServiceValidationRule[U <: Any](expected: U,
                                            actual : ServiceInfo => U,
-                                           line : Line,
-                                           fullName : FullName,
+
                                            service : String = "",
                                           name : String = ""
                                           )

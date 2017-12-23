@@ -12,46 +12,34 @@ import com.jetprobe.mongo.sink.MongoSink
 trait MongoValidationSupport {
 
   //implicit def mongoSinkValidator(sink : MongoSink) : MongoValidationRulesBuilder = new MongoValidationRulesBuilder(sink)
+  import io.circe.generic.auto._
 
   type ServerStatsAssert = ServerStats => Boolean
 
-  def checkStats[U](expected: U, actual: ServerStats => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  ServerStatsRule[U] = ServerStatsRule(expected, actual)(fullName, line)
-
-  def checkDBStats[U](expected: U, actual: DBStats => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  DBStatsRule[U] = DBStatsRule(expected, actual, line = line, fullName = fullName)
-
-  def checkDatabaseList[U](expected: U, actual: DatabaseList => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  DatabaseListRule[U] = DatabaseListRule(expected, actual)
-
   def checkCollectionStats[U](expected: U, actual: CollectionStats => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  CollectionStatsRule[U] = CollectionStatsRule(expected, actual, line = line, fullName = fullName)
+  CollectionStatsRule[U] = CollectionStatsRule(expected, actual)
 
-  def checkDocuments[U](query: String, expected: U, actual: SourceBsonDocuments[String] => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  DocumentsRule[U] = DocumentsRule(expected, actual, Expr(query), fullName = fullName, line = line)
+  def checkDocuments[U](expected: U, actual: SourceBsonDocuments[Any] => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
+  DocumentsRule[U] = DocumentsRule(expected, actual)
 
-  def given(dbQuery : DBQuery)(rules : DBStatsRule[_]*) : Seq[ValidationRule[MongoSink]] = {
-    rules.map(r => r.copy(database = Expr(dbQuery.name)))
+  def given(dbQuery : DBQuery)(ruleFn : DBStats => Any) : ValidationRule[MongoSink] = {
+    DatabaseStatsRule(ruleFn,Expr(dbQuery.name))
   }
 
-  def given(collectionQuery: CollectionQuery)(rules : CollectionStatsRule[_]*): Seq[ValidationRule[MongoSink]] = {
-
-    rules.map( rb => rb.copy(db = Expr(collectionQuery.database), collection = Expr(collectionQuery.collection)))
+  //Validation DSL for MongoDB server
+  def given(server : ServerQuery)(ruleFn : ServerStats => Any) : ValidationRule[MongoSink] = {
+    MongoServerStatsRule(ruleFn)
   }
 
+//
   def given(docQuery: DocQuery)(rules : DocumentsRule[_]*): Seq[ValidationRule[MongoSink]] = {
     rules.map(q => q.copy(db = Expr(docQuery.database),collection = Expr(docQuery.collection),query = Expr(docQuery.query)))
   }
 
-  //Helper methods for creating query instances. This is to avoid the need to import the objects, and take better advantage of IDE auto-completes
-  def mongo(database : String) : DBQuery = new DBQuery(database)
-  def mongo(database : String,collection : String) = new CollectionQuery(database,collection)
-  def mongo(database : String, collection : String, query : String) = new DocQuery(database,collection,query)
+  def given[T](query : MongoSQL[T])(ruleFn : Seq[T] => Any) : ValidationRule[MongoSink] = MongoQueryRule[T](ruleFn,Expr(query.sql),query.decoder,None)
 
-
+  /*implicit object MongoValidationExecutor extends MongoValidator*/
   implicit object MongoValidationExecutor extends MongoValidator
-
-
 
 }
 

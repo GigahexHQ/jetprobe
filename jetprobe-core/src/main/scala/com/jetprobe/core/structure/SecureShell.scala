@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.builder.SSHActionBuilder
+import com.jetprobe.core.action.builder.{ActionBuilder, SSHActionBuilder}
 import com.jetprobe.core.action.{ExecuteCmd, ExecuteCommand, SSHConfig, SshCopy}
 
 /**
@@ -17,5 +17,6 @@ trait SecureShell[B] extends Execs[B]{
     val actionBuilder = new SSHActionBuilder(ExecuteCmd(cmd),config)
     exec(actionBuilder)
   }
+
 
 }

@@ -8,22 +8,9 @@ import com.jetprobe.core.validations.ValidationRule.ActualResolver
   */
 trait ValidationRule[D] {
 
-  val expected: Any
-
-
-  val actual: ActualResolver[_]
+  def validate(config : Map[String,Any]) : ValidationResult = ???
 
   def name: String
-
-  def line: sourcecode.Line
-
-  def fullName: sourcecode.FullName
-
-  def onSuccess: String = s"${name} passed"
-
-  def onFailure[U <: Any](actual: U, expected: U, given: String): String = s"Validation failed at ${fullName.value}:${line.value}. Given $given," +
-    s" Expected = $expected Found = $actual"
-
 
 }
 

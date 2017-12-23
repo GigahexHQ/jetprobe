@@ -14,5 +14,5 @@ class PauseActionBuilder(duration : FiniteDuration) extends ActionBuilder{
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = new Pause(duration,ctx.system,next)
+  override def build(ctx: ScenarioContext, next: Action): Action = new Pause(duration,next,ctx.system, ctx.controller)
 }

@@ -2,11 +2,12 @@ package com.jetprobe.core.action.builder
 
 import com.jetprobe.core.action.Action
 import com.jetprobe.core.structure.ScenarioContext
+import com.typesafe.scalalogging.LazyLogging
 
 /**
   * @author Shad.
   */
-trait ActionBuilder {
+trait ActionBuilder extends LazyLogging{
 
   /**
     * @param ctx the test context

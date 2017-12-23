@@ -5,17 +5,19 @@ package com.jetprobe.core.parser
   */
 
 import com.typesafe.scalalogging.LazyLogging
-
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
 import scala.util.parsing.combinator._
+import scala.collection.mutable.ArrayBuffer
+
 
 class SimpleParser extends RegexParsers {
   def word: Parser[String] =
     """[a-z]+""".r ^^ {
       _.toString
     }
+
+
+  def where : Parser[String] = """"(?i)where"""".r
+
 }
 
 class ExpressionParser(config: Map[String, Any]) extends RegexParsers {
@@ -28,9 +30,7 @@ class ExpressionParser(config: Map[String, Any]) extends RegexParsers {
     }
 
   private def aw =
-    """.+?(?=\$\{)""".r ^^ {
-      _.toString
-    }
+    """.+?(?=\$\{)""".r
 
   private def start = """\$\{""".r
 

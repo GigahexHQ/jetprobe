@@ -7,7 +7,7 @@ import org.scalatest.FlatSpec
   * @author Shad.
   */
 class RabbitValidationSupportSpec extends FlatSpec with RabbitMQValidationSupport{
-
+/*
   behavior of "RabbitValidationSpec"
 
   it should "create rabbit validationRules" in {
@@ -25,6 +25,6 @@ class RabbitValidationSupportSpec extends FlatSpec with RabbitMQValidationSuppor
 
     assert(queueRules.size === 3)
     assert(exchangeRules === queueRules)
-  }
+  }*/
 
 }

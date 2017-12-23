@@ -1,6 +1,7 @@
 package com.jetprobe.core.action
 
 import akka.actor.{Actor, PoisonPill, Terminated}
+import com.jetprobe.core.runner.ScenarioManager.ExecuteNext
 import com.jetprobe.core.session.Session
 import com.typesafe.scalalogging.LazyLogging
 
@@ -29,12 +30,16 @@ abstract class BaseActor extends Actor with LazyLogging {
       case unknown          => throw new IllegalArgumentException(s"Actor $this doesn't support message $unknown")
     }
 
-  override def postStop(): Unit = logger.debug(s"Stopping the actor ${self.path.name}")
+  override def postStop(): Unit = logger.info(s"Stopping the actor ${self.path.name}")
 }
 
 class ActionDelegatorActor(next : Action, session : Session) extends BaseActor {
+
   override def receive: Receive = {
-    case ExecuteCommand => next ! session
+    case ExecuteCommand =>
+      val data = new Array[Byte](20000000)
+      sender() ! ExecuteNext(next,session,false)
+      //next ! session
   }
 }
 case object ExecuteCommand

@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-@TestSuite
+//@TestSuite
 class MyTestScenario extends TestScenario with RabbitMQValidationSupport with MongoValidationSupport with HttpValidationSupport with ConsulValidationSupport {
 
   //Declare the rabbitmq connection
@@ -52,7 +52,7 @@ class MyTestScenario extends TestScenario with RabbitMQValidationSupport with Mo
     )
     .pause(1.seconds)
 
-    .validate[HttpRequestBuilder](getPosts) {
+    /*.validate[HttpRequestBuilder](getPosts) {
 
 
     val responseValiation = Seq(
@@ -66,23 +66,25 @@ class MyTestScenario extends TestScenario with RabbitMQValidationSupport with Mo
 
     .validate[MongoSink](mongo) {
 
-    val serverValidations = Seq(
-      checkStats[String]("3.4.0", _.version),
-      checkStats[Boolean](true, _.version.startsWith("3.4")),
-      checkStats[Boolean](true, _.connections.current < 50),
-      checkStats[Long](80L, _.opcounters.insert)
+    val isDbValid = given(mongo(database = "${mdm.tenantId}"))(
+      checkDBStats[Boolean](true, dbStats => dbStats.collections == 10)
     )
 
-    val databaseStats = given(mongo("${mdm.tenantId}"))(
-      checkDBStats[Boolean](true, _.collections == 10)
+    val isCollectionCreated = given(mongo(database = "articleAnalytics", collection = "popularityIndex"))(
+      checkCollectionStats[Boolean](true, collectionInfo => collectionInfo.nindexes == 2)
     )
 
-    serverValidations ++ databaseStats
+    val isDocsInserted = given(mongo(
+      database = "articleAnalytics",
+      collection = "popularityIndex",
+      query = """{"category" : "functional-programming"}""")
+    )(
+      checkDocuments[Int](100, docs => docs.count)
+    )
 
-
-  }
-
-    .pause(3.seconds)
+    isDbValid ++ isCollectionCreated ++ isDocsInserted
+  }*/
+    .pause(1.minute)
     //Add some more tests
     .build
 }

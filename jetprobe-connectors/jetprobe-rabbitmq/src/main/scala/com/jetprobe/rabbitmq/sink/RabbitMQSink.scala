@@ -4,6 +4,7 @@ package com.jetprobe.rabbitmq.sink
 import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
 import com.jetprobe.core.sink.DataSink
+import com.jetprobe.rabbitmq.validation.RabbitMQPredicates
 import com.rabbitmq.client.{Connection, ConnectionFactory}
 import com.rabbitmq.http.client.Client
 import com.typesafe.scalalogging.LazyLogging
@@ -20,7 +21,7 @@ case class RabbitMQSink(host: Expr,
                         protocol: Expr = Expr("http"),
                         config: Map[String, Any] = Map.empty
                        )
-  extends DataSink {
+  extends DataSink with RabbitMQPredicates {
 
   lazy val parsedConfig : Either[Exception,Map[String,String]] = {
     val exprs = Seq(host,vHost,username,routingKey,protocol,username,password)

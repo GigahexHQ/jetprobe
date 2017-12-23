@@ -12,26 +12,18 @@ import com.jetprobe.rabbitmq.sink.RabbitMQSink
 trait RabbitMQValidationSupport {
 
 
-  def checkExchange[U](expected: U, actual: ExchangeProps => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  ExchangeValidationRule[U] = ExchangeValidationRule(expected, actual, fullName = fullName, line = line)
-
-
-  def checkQueue[U](expected: U, actual: QueueProps => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  QueueValidationRule[U] = QueueValidationRule(expected, actual, fullName = fullName, line = line)
-
   def rabbitMQ(connectionString: String): RabbitMQSink = RabbitMQSink(connectionString)
 
-  def given(exchange : ExchangeQuery)(rules : ExchangeValidationRule[_]*) : Seq[ValidationRule[RabbitMQSink]] = {
-    rules.map( ex => ex.copy(exchangeName = Expr(exchange.name), vHost = Expr(exchange.vHost)))
+  def given(exchange : ExchangeQuery)(fnRule : ExchangeProps => Any) : ValidationRule[RabbitMQSink] = {
+    ExchangeValidationRule(fnRule,Expr(exchange.vHost),Expr(exchange.name))
   }
 
-  def given(queue : QueueQuery)( rules : QueueValidationRule[_]* ) : Seq[ValidationRule[RabbitMQSink]] = {
-    rules.map( ex => ex.copy(queueName = Expr(queue.name), vhost = Expr(queue.vHost)))
+  def given(queue : QueueQuery)( fnRule : QueueProps => Any ) : ValidationRule[RabbitMQSink] = {
+    QueueValidationRule(fnRule,vhost = Expr(queue.vHost),queueName = Expr(queue.name))
   }
 
 
-  def exchange(name : String,vHost : String) : ExchangeQuery = new ExchangeQuery(name,vHost)
-  def queue(name : String, vHost : String) : QueueQuery = new QueueQuery(name,vHost)
+
 
   implicit object RabbitExecutor extends RabbitMQValidator
 

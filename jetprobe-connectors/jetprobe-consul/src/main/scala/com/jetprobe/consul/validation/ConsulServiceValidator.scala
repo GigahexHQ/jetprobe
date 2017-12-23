@@ -72,7 +72,7 @@ object ConsulServiceValidator {
         }
         else {
           val condition = s"Service name : ${ruleImpl.service}"
-          ValidationResult.failed(ruleImpl.copy(name = condition), ruleImpl.onFailure(ruleImpl.actual(sInfo), ruleImpl.expected,condition))
+          ValidationResult.failed(ruleImpl.copy(name = condition), "failed")
         }
     }
 

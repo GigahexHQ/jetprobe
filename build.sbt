@@ -3,6 +3,8 @@ import Dependencies._
 
 mainClass in Compile := Some("com.jetprobe.core.runner.TestRunner")
 
+resolvers += Resolver.typesafeIvyRepo("releases")
+
 publishTo := Some(
   if (isSnapshot.value)
     Opts.resolver.sonatypeSnapshots
@@ -24,11 +26,29 @@ packMain := Map("jetprobe" -> "com.jetprobe.core.runner.TestRunner")
 
 packResourceDir += (baseDirectory.value / "web/static" -> "static")
 
-lazy val core = jetProbeModule("jetprobe-core")
-  //.dependsOn(commons % "compile->compile;test->test")
+lazy val commons = jetProbeModule("jetprobe-common")
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= coreDependencies)
+
+lazy val core = jetProbeModule("jetprobe-core")
+  .dependsOn(commons % "compile->compile;test->test")
+  .settings(basicSettings: _*)
+  .settings(libraryDependencies ++= coreDependencies ++ testDependencies)
   .enablePlugins(PackPlugin)
+
+
+lazy val hadoopConnector = jetProbeConnector("jetprobe-hadoop")
+  .dependsOn(core % "compile->compile")
+  .settings(basicSettings: _*)
+  .settings(libraryDependencies ++= hadoopDeps ++ testDependencies)
+
+
+
+lazy val hbaseConnector = jetProbeConnector("jetprobe-hbase")
+  .dependsOn(core % "compile->compile")
+  .settings(basicSettings: _*)
+  .settings(libraryDependencies ++= hbaseDeps ++ testDependencies)
+
 
 lazy val consulConnector = jetProbeConnector("jetprobe-consul")
   .dependsOn(core % "compile->compile")
@@ -53,7 +73,10 @@ lazy val samples = jetProbeModule("jetprobe-sample")
   .dependsOn(mongoConnector % "compile->compile")
   .dependsOn(rabbitConnector % "compile->compile")
   .dependsOn(consulConnector % "compile->compile")
+  .dependsOn(hadoopConnector % "compile->compile")
+  .dependsOn(hbaseConnector % "compile->compile")
   .settings(basicSettings: _*)
+  .settings(libraryDependencies ++= coreDependencies)
 
 
 

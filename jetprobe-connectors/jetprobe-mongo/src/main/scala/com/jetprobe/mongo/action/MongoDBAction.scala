@@ -1,6 +1,6 @@
 package com.jetprobe.mongo.action
 
-import akka.actor.Props
+import akka.actor.{PoisonPill, Props}
 import com.jetprobe.core.action.{Action, ActionActor, ActionMessage}
 import com.jetprobe.core.session.Session
 import com.jetprobe.mongo.sink.MongoSink
@@ -16,12 +16,13 @@ import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-class MongoIOActor(val next: Action, mongoSink: MongoSink) extends ActionActor {
+/*class MongoIOActor(val next: Action, mongoSink: MongoSink) extends ActionActor {
 
   val batchSize = 512
   val idxStr = """{ "idx" : 1 }"""
 
   override def execute(actionMessage: ActionMessage, session: Session): Unit = {
+
     val mongoClient = mongoSink.copy(config = session.attributes).mongoClient
     if(mongoClient.nonEmpty){
       actionMessage match {
@@ -78,7 +79,7 @@ class MongoIOActor(val next: Action, mongoSink: MongoSink) extends ActionActor {
   }
 
 
-}
+}*/
 
 sealed trait MongoIOActionDef extends ActionMessage {
   override def name: String = this.toString
@@ -89,6 +90,7 @@ case class CreateCollection(database: String, collection: String, indexFields : 
 
 case class InsertRows(database: String, collection: String, rows: Iterator[String]) extends MongoIOActionDef
 
+case class SelectQuery(q : String) extends MongoIOActionDef
 
 case class CreateDatabase(database: String) extends MongoIOActionDef
 
@@ -99,12 +101,14 @@ case class DropCollection(database: String, collection: String) extends MongoIOA
 case class RemoveAllDocuments(database: String, collection: String) extends MongoIOActionDef
 
 
+/*
 object MongoIOActor {
 
 
   def props(next: Action, mongoSink: MongoSink): Props = Props(new MongoIOActor(next, mongoSink))
 }
 
+*/
 
 
 

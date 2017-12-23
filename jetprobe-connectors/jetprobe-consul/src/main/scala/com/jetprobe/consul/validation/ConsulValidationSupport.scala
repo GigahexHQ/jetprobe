@@ -14,8 +14,8 @@ trait ConsulValidationSupport {
     rules.map(serviceRules => serviceRules.copy(service = serviceQuery.name))
   }
 
-  def checkService[U](expected: U, actual: ServiceInfo => U)(implicit line: sourcecode.Line, fullName: sourcecode.FullName):
-  ServiceValidationRule[U] = ServiceValidationRule(expected, actual, line,fullName)
+  def checkService[U](expected: U, actual: ServiceInfo => U):
+  ServiceValidationRule[U] = ServiceValidationRule(expected, actual)
 
   def service(name : String) = new ServiceQuery(name)
 

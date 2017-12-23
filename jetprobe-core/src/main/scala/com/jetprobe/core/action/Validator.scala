@@ -1,24 +1,26 @@
 package com.jetprobe.core.action
 
-import akka.actor.Props
+import akka.actor.{ActorRef, PoisonPill, Props}
+import com.jetprobe.core.runner.ScenarioManager.ExecuteNext
 import com.jetprobe.core.sink.{DataSink, DataSource}
-import com.jetprobe.core.validations.{ValidationExecutor, ValidationRule, ValidationRulesBuilder}
+import com.jetprobe.core.validations.{ValidationExecutor, ValidationRule}
 
+import scala.concurrent.duration._
 /**
   * @author Shad.
   */
-class Validator[D <: DataSource](rulesBuilder: Seq[ValidationRule[D]], runner: ValidationExecutor[D], sink : D) extends BaseActor {
+class Validator[D <: DataSource](rulesBuilder: Seq[ValidationRule[D]], runner: ValidationExecutor[D], sink : D,controller : ActorRef) extends BaseActor {
 
   override def receive: Receive = {
     case FeedMessage(session, next) =>
-      //println(s"executing the validations ${rulesBuilder.build.size}")
-      val updatedSession = session.copy(validationResuls = runner.execute(rulesBuilder,sink,session.attributes) ++ session.validationResuls)
 
-      next ! updatedSession
+      val updatedSession = session.copy(validationResuls = runner.execute(rulesBuilder,sink,session.attributes) ++ session.validationResuls)
+      controller ! ExecuteNext(next,updatedSession,false)
+
   }
 }
 
 object Validator {
-  def props[D <: DataSource](rules: Seq[ValidationRule[D]], runner: ValidationExecutor[D], sink : D): Props =
-    Props(new Validator(rules: Seq[ValidationRule[D]], runner,sink))
+  def props[D <: DataSource](rules: Seq[ValidationRule[D]], runner: ValidationExecutor[D], sink : D,controller : ActorRef): Props =
+    Props(new Validator(rules: Seq[ValidationRule[D]], runner,sink,controller))
 }

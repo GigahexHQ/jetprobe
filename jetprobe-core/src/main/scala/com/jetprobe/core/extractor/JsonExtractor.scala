@@ -1,8 +1,10 @@
 package com.jetprobe.core.extractor
 
+import java.util.{LinkedHashMap => jl}
+
 import com.jayway.jsonpath.{Configuration, JsonPath}
 import com.typesafe.scalalogging.LazyLogging
-
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -11,6 +13,14 @@ import scala.util.{Failure, Success, Try}
 object JsonPathExtractor extends DataExtractor[String,Map[String,Any]]{
 
   def jsonPath(path : String, saveAs : String) : JsonPathBuilder = new JsonPathBuilder(path,saveAs)
+
+  def extractJsonVal(path : String, fromDoc : jl[String,Any]) : Any = {
+
+    if(fromDoc.get(path) == null){
+      throw new Exception(s"${path} not found")
+    } else
+      fromDoc.get(path)
+  }
 
 }
 

@@ -10,7 +10,7 @@ import scala.concurrent.duration._
   * @author Shad.
   */
 @TestSuite
-class ShellPipe extends TestScenario {
+class SSHTestSuite extends TestScenario {
 
   val sshConfig = SSHConfig(user = "shad", password = "admin", hostName = "192.168.37.128")
 
