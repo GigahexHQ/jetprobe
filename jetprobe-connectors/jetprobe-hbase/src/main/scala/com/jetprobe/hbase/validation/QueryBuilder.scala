@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.util.Bytes
   */
 object HBaseQueryBuilder {
 
+
   import BinaryOperationHandler._
 
   private val allFields = "*"
@@ -42,21 +43,18 @@ object HBaseQueryBuilder {
 
   }
 
-  def getColumns(selectStmt: SelectStmt): Seq[(Array[Byte], Array[Byte])] = {
+  def getColumns(projections: Seq[SqlProj]): Seq[HBaseColumn] = {
 
-    val fields = selectStmt.projections.map {
-      case ExprProj(expr, _, _) => expr match {
-        case FieldIdent(_, name, _, _) => name
-      }
-      case StarProj(_) => "*"
+    SQLParser.getColumnMeta(projections).map { cm =>
+      val (cf, cq) = getHBaseColumnMeta(cm.fieldName)
+      HBaseColumn(cf, cq, cm.alias, cm.dataType)
     }
 
-    fields.map(getcolumnMeta(_))
 
   }
 
 
-  def getcolumnMeta(field: String): (Array[Byte], Array[Byte]) = {
+  def getHBaseColumnMeta(field: String): (Array[Byte], Array[Byte]) = {
     val schemaField = field.split("\\.")
     if (schemaField.length == 2)
       (Bytes.toBytes(schemaField.head), Bytes.toBytes(schemaField.last))
@@ -75,7 +73,7 @@ object HBaseQueryBuilder {
         throw new IllegalArgumentException("Unable to extract table information")
     }
 
-    if (parsedTable.size > 1)
+    if (parsedTable.length > 1)
       throw new IllegalArgumentException("Multiple table definition found. Currently single table definition is supported")
 
 
@@ -89,39 +87,44 @@ object HBaseQueryBuilder {
 
   private def parseProjections(projs: Seq[SqlProj], scan: Scan): Scan = {
 
-    val fields = projs.map {
-      case ExprProj(expr, _, _) => expr match {
-        case FieldIdent(_, name, _, _) => name
-      }
-      case StarProj(_) => "*"
-    }
+    val fields = SQLParser.getColumnMeta(projs)
 
-    if (fields.size == 1 && fields.head.equals("*")) {
+    if (fields.length == 1 && fields.head.fieldName.equals("*")) {
       scan.setBatch(maxBatchSize)
 
-    } else if (fields.size > 1 && fields.contains("*")) {
+    } else if (fields.length > 1 && fields.head.fieldName.equals("*")) {
       throw new IllegalArgumentException("Field must not contain '*' as the only value")
     } else {
-      if (fields.forall(_.contains("."))) {
-        val extractedFields = fields.map { f =>
-          val f1 = f.split("\\.")(0)
-          val f2 = f.split("\\.")(1)
-          (f1, f2)
-        }
 
-        extractedFields.foreach {
-          case (columnfamily, columnName) => scan.addColumn(Bytes.toBytes(columnfamily), Bytes.toBytes(columnName))
-        }
-
-
-
-      } else {
-        throw new IllegalArgumentException("Field must be in the format <Column_family>.<Column_name>")
+      fields.foreach { column =>
+        val (cf, cv) = getHBaseColumnMeta(column.fieldName)
+        scan.addColumn(cf, cv)
       }
-
     }
 
     scan
   }
 
 }
+
+case class HBaseColumn(columnFamily: Array[Byte], columnQualifier: Array[Byte], alias: Option[String], dataType: FieldType) {
+
+  val column : String = Bytes.toString(columnQualifier)
+
+  def getData(cellValue: Array[Byte]): (String, Any) = {
+    val cell = dataType match {
+      case IntegerType => Bytes.toInt(cellValue)
+      case DoubleType => Bytes.toDouble(cellValue)
+      case FloatType => Bytes.toFloat(cellValue)
+      case StringType => Bytes.toString(cellValue)
+    }
+
+    alias match {
+      case Some(aliasVal) => (aliasVal , cell)
+      case None => (column , cell)
+    }
+
+  }
+
+}
+
