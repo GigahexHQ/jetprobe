@@ -3,7 +3,7 @@ package com.jetprobe.mongo.sink
 
 import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
-import com.jetprobe.core.sink.DataSink
+import com.jetprobe.core.storage.DataSink
 import com.jetprobe.mongo.action._
 import com.jetprobe.mongo.validation.MongoConditionalQueries
 import org.mongodb.scala.bson.BsonDocument
@@ -25,18 +25,18 @@ case class MongoSink private(val db: Expr, val collection: Expr, val host: Expr,
 
   lazy val mongoClient = getMongoClient(host,config)
 
-  override def save(record: Generator): Unit = {
-    val collectionOpt = getCollectionOpt(host,db,collection,config)
+  def load(records: Iterator[String],database : String, collectionName : String): Unit = {
+    val collectionOpt = getCollectionOpt(host,Expr(database),Expr(collectionName),config)
     collectionOpt match {
       case Some(col) =>
-        record
+        records
           .grouped(batchSize)
           .foreach(docs => {
             val observable =
               col.insertMany(docs.map(str => Document(BsonDocument(str))))
             Await.result(observable.head(), 10 seconds)
           })
-        logger.info(s"Total docs inserted : ${record.length}")
+//        logger.info(s"Total docs inserted : ${record.length}")
 
       case None =>
         logger.error(s"Unable to fetch the collection for the ${collection.value}")

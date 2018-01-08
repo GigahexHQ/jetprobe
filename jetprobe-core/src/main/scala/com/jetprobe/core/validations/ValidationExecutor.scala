@@ -1,6 +1,6 @@
 package com.jetprobe.core.validations
 
-import com.jetprobe.core.sink.{DataSink, DataSource}
+import com.jetprobe.core.storage.{Storage, DataSource}
 import com.jetprobe.core.validations.ValidationExecutor.Parsed
 import io.circe.Error
 
@@ -19,7 +19,7 @@ trait ValidationExecutor[D <: DataSource]  {
 
   type ValidationFn[T <: Any] = Seq[T] => Any
 
-  def execute(rules: Seq[ValidationRule[D]], sink: D, config : Map[String,Any]): Seq[ValidationResult]
+  //def execute(rules: Seq[ValidationRule[D]], sink: D, config : Map[String,Any]): Seq[ValidationResult]
 
   def validateResponse[T](parsed: Parsed[T], extractor: Extractor[T]): ValidationResult = {
 
@@ -65,14 +65,25 @@ trait RuleValidator {
 
   type Extractor[T] = T => Any
 
-  def validateResponse[T](parsed: Parsed[T], extractor: Extractor[T]): ValidationResult = {
+  def validateResponse[T](value : T,extractor: Extractor[T]) : ValidationResult = {
+    val tryResult = Try { extractor(value)  }
+
+    tryResult match {
+      case Success(_) => ValidationResult.success()
+      case Failure(ex) => ValidationResult.failed(ex.getMessage)
+    }
+
+  }
+
+  def validateResponse[T](parsed: Parsed[T], extractor: Extractor[T],rule : ValidationRule[_]): ValidationResult = {
 
     val resultFuture = parsed.map {
-      case Left(ex) => ValidationResult.failed(ex.getMessage)
+      case Left(ex) => ValidationResult.failed(rule,ex.getMessage)
       case Right(param) => //handleAssertion[DBStats](databaseSt,extractor,className,line)
         val result = Try {
           extractor.apply(param)
         }
+
         result match {
           case Success(_) => ValidationResult.success()
           case Failure(exception) =>
@@ -80,7 +91,7 @@ trait RuleValidator {
         }
     }
 
-    Await.result(resultFuture, 300.seconds)
+    Await.result(resultFuture, 10.seconds)
 
   }
 

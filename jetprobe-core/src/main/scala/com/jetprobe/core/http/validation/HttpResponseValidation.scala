@@ -2,9 +2,9 @@ package com.jetprobe.core.http.validation
 
 import com.jetprobe.core.extractor.JsonPathBuilder
 import com.jetprobe.core.http.HttpRequestBuilder
-import com.jetprobe.core.sink.DataSource
+import com.jetprobe.core.storage.DataSource
 import com.jetprobe.core.validations.ValidationExecutor.Parsed
-import com.jetprobe.core.validations.ValidationRule
+import com.jetprobe.core.validations.{ValidationResult, ValidationRule}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -25,6 +25,7 @@ case class HttpResponseValidationRule(httpRequestName: String = "",
 
   override def name: String = s"Validation for HTTP Request : ${httpRequestName}"
 
+  override def validate(config: Map[String, Any], storage: HttpRequestBuilder): ValidationResult = ???
 }
 
 case class FetchedResponse(status: Int, responseBody: String, headers: Map[String, String]) extends DataSource
@@ -49,6 +50,5 @@ case class JsonResponseRule(httpRequestName: String = "",
     Future(result)
   }
 
-
-
+  override def validate(config: Map[String, Any], storage: HttpRequestBuilder): ValidationResult = ???
 }

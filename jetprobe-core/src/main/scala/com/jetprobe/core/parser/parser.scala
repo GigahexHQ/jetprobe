@@ -263,6 +263,8 @@ class SQLParser extends StandardTokenParsers {
     }
   }
 
+
+
   def extract(stmt : SelectStmt) : ParsedSelect = {
 
     val fields = stmt.projections.map{
@@ -282,3 +284,38 @@ class SQLParser extends StandardTokenParsers {
  }
 
 case class ParsedSelect(fields : Seq[String],table : String)
+
+case class ColumnMeta(fieldName : String, alias : Option[String],dataType : FieldType = StringType)
+
+object SQLParser {
+
+  def getColumnMeta(projections: Seq[SqlProj]) : Seq[ColumnMeta] = {
+    projections.map {
+      case ExprProj(expr, alias, _) => expr match {
+        case FieldIdent(_, name, _, _) => ColumnMeta(name,alias)
+        case FunctionCall("cast",xs,_) => xs.head match {
+          case FieldIdent(alias,name,_,_) => ColumnMeta(name,alias,getDataType(xs.last.asInstanceOf[FieldIdent].name))
+        }
+        case _ => throw new IllegalArgumentException("Field or operation not supported")
+      }
+      case StarProj(_) => ColumnMeta("*",None)
+
+    }
+  }
+
+  private def getDataType(s : String) : FieldType = s match {
+    case x if x.equalsIgnoreCase("int") || x.equalsIgnoreCase("integer") => IntegerType
+    case x if x.equalsIgnoreCase("str") || x.equalsIgnoreCase("string") => StringType
+    case x if x.equalsIgnoreCase("f") || x.equalsIgnoreCase("float") => FloatType
+    case x if x.equalsIgnoreCase("d") || x.equalsIgnoreCase("double") => DoubleType
+    case x => throw new IllegalArgumentException(s"Field data type ${x} not supported")
+
+  }
+
+}
+
+trait FieldType
+case object IntegerType extends FieldType
+case object DoubleType extends FieldType
+case object FloatType extends FieldType
+case object StringType extends FieldType

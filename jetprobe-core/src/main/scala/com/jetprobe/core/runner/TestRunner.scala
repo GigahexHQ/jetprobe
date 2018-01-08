@@ -12,8 +12,8 @@ import java.util.zip.ZipInputStream
 import akka.actor.ActorSystem
 import com.jetprobe.core.TestScenario
 import com.jetprobe.core.annotation.TestSuite
-import com.jetprobe.core.common.{ConfigReader, DefaultConfigs, Version}
-import com.jetprobe.core.structure.ExecutableScenario
+import com.jetprobe.core.common.{ConfigReader, DefaultConfigs}
+import com.jetprobe.core.structure.{ExecutableScenario, ScenarioBuilder}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * @author Shad.
   */
-object TestRunner extends LazyLogging with Version {
+object TestRunner extends LazyLogging {
 
   var appHome: String = _
 
@@ -86,20 +86,23 @@ object TestRunner extends LazyLogging with Version {
         val t = testBuilder.newInstance()
 
         if (t.isInstanceOf[TestScenario]) {
-          val m = testBuilder.getDeclaredMethod("buildScenario")
+          val m = testBuilder.getDeclaredMethod("actions")
           m.setAccessible(true)
-          val result = m.invoke(t).asInstanceOf[ExecutableScenario]
+          val result = m.invoke(t).asInstanceOf[ScenarioBuilder]
+          val scn = result.build()
+
           val defaultConf: Map[String, Any] = Map(DefaultConfigs.htmlReportAttr -> reportPath) ++ DefaultConfigs.staticResourceConfig(appHome)
+
           configFile match {
-            case Some(conf) => scenarios.+=(result.copy(className = csName, config = ConfigReader.fromYAML(conf) ++ defaultConf))
-            case None => scenarios.+=(result.copy(className = csName, config = defaultConf))
+            case Some(conf) => scenarios.+=(scn.copy(className = csName, config = ConfigReader.fromYAML(conf) ++ defaultConf))
+            case None => scenarios.+=(scn.copy(className = csName, config = defaultConf))
           }
 
         }
       }
     })
     //Start executing the test
-    runner.run(scenarios)
+    runner.run(scenarios :_*)
 
   }
 

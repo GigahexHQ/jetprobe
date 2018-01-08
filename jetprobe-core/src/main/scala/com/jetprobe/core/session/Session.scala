@@ -14,7 +14,7 @@ case class Session(
                     className : String,
                     attributes: Map[String, Any] = Map.empty,
                     records: Generator = Iterator.empty,
-                    validationResuls : Seq[ValidationResult] = Seq(),
+                    validationResults : Seq[ValidationResult] = Seq(),
                     startDate: Long = new Date().getTime,
                     onExit: Session => Unit = Session.NothingOnExit
                   ) extends LazyLogging

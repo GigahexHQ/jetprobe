@@ -26,7 +26,7 @@ class HttpValidator extends ValidationExecutor[HttpRequestBuilder]  with LazyLog
     }
   }
 
-  override def execute(rules: Seq[ValidationRule[HttpRequestBuilder]], sink: HttpRequestBuilder, config: Map[String, Any]): Seq[ValidationResult] = {
+  def execute(rules: Seq[ValidationRule[HttpRequestBuilder]], sink: HttpRequestBuilder, config: Map[String, Any]): Seq[ValidationResult] = {
 
     val httpResponse = config.get(sink.requestName) match {
       case Some(HttpResponse(a, b, c, d)) => Some(getHttpResponse(HttpResponse(a, b, c, d)))

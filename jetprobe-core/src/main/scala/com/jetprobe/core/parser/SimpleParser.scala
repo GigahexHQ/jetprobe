@@ -5,71 +5,7 @@ package com.jetprobe.core.parser
   */
 
 import com.typesafe.scalalogging.LazyLogging
-import scala.util.parsing.combinator._
 import scala.collection.mutable.ArrayBuffer
-
-
-class SimpleParser extends RegexParsers {
-  def word: Parser[String] =
-    """[a-z]+""".r ^^ {
-      _.toString
-    }
-
-
-  def where : Parser[String] = """"(?i)where"""".r
-
-}
-
-class ExpressionParser(config: Map[String, Any]) extends RegexParsers {
-
-  //val config = Map("url" -> "http://local-host:8081", "api" -> "metadata")
-
-  private def anyWord =
-    """[A-Za-z-:./0-9_{}\[\]\?\%\=\@\(\)\'\# ",]+""".r ^^ {
-      _.toString
-    }
-
-  private def aw =
-    """.+?(?=\$\{)""".r
-
-  private def start = """\$\{""".r
-
-  private def ignoreWord =
-    """\$(\w\s:',/@\[\]\=\{}\.\-")+""".r ^^ {
-      _.toString
-    }
-
-  private def word =
-    """[A-Za-z-.]+""".r ^^ {
-      _.toString
-    }
-
-  private def end = """\}""".r
-
-  def expr: Parser[String] = start ~ word ~ end ^^ {
-    case st ~ wd ~ ed =>
-      config(wd).toString
-  }
-
-  def variableParser: Parser[String] = opt(anyWord) ~ opt(ignoreWord) ~ opt(expr ~ variableParser) ^^ {
-    case Some(a) ~ Some(b) ~ None => println("1"); a + b
-    case Some(a) ~ None ~ Some(b ~ c) => println("2"); a + b + c
-    case None ~ Some(a) ~ Some(b ~ c) => println("3"); a + b + c
-    case Some(a) ~ Some(b) ~ Some(c ~ d) => println("4"); a + b + c + d
-    case None ~ None ~ Some(a ~ b) => println("5"); a + b
-    case _ => println("6"); ""
-  }
-
-  def vp: Parser[String] = opt(aw) ~ opt(expr) ~ opt(anyWord ~ vp) ^^ {
-    case Some(a) ~ Some(b) ~ None => println("1"); a + b
-    case Some(a) ~ None ~ Some(b ~ c) => println("2"); a + b + c
-    case None ~ Some(a) ~ Some(b ~ c) => println("3"); a + b + c
-    case Some(a) ~ Some(b) ~ Some(c ~ d) => println("4"); a + b + c + d
-    case None ~ None ~ Some(a ~ b) => println("5"); a + b
-    case None ~ Some(a) ~ None => println("7"); a
-    case _ => println("6"); ""
-  }
-}
 
 case class Expr(value: String = "")
 

@@ -8,8 +8,7 @@ import com.jetprobe.core.http.HttpDSL
   */
 trait StructureBuilder[B <: StructureBuilder[B]]
   extends Execs[B]
-    with Feeds[B]
-    with Ingests[B]
+    with DataFeed[B]
     with HttpDSL[B]
     with Pauses[B]
     with SecureShell[B]

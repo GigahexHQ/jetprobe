@@ -1,8 +1,6 @@
 package com.jetprobe.core.action
 
-import akka.actor.{Actor, PoisonPill, Terminated}
-import com.jetprobe.core.runner.ScenarioManager.ExecuteNext
-import com.jetprobe.core.session.Session
+import akka.actor.{Actor, Terminated}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration.Duration
@@ -33,13 +31,5 @@ abstract class BaseActor extends Actor with LazyLogging {
   override def postStop(): Unit = logger.info(s"Stopping the actor ${self.path.name}")
 }
 
-class ActionDelegatorActor(next : Action, session : Session) extends BaseActor {
 
-  override def receive: Receive = {
-    case ExecuteCommand =>
-      val data = new Array[Byte](20000000)
-      sender() ! ExecuteNext(next,session,false)
-      //next ! session
-  }
-}
 case object ExecuteCommand

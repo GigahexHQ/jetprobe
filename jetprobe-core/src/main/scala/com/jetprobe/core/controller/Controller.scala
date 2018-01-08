@@ -18,7 +18,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * @author Shad.
   */
-class Controller(hasReport : Boolean) extends BaseActor with LazyLogging {
+class Controller(hasReport: Boolean) extends BaseActor with LazyLogging {
   var total = 0
   var finished = 0
   val reports: ArrayBuffer[ValidationReport] = ArrayBuffer.empty
@@ -33,78 +33,44 @@ class Controller(hasReport : Boolean) extends BaseActor with LazyLogging {
 
   override def receive: Receive = {
 
-    case EndScenario(session,timeTaken : Double,finalStatus) =>
+    case EndScenario(session, timeTaken: Double, finalStatus) =>
       val finalReport = ValidationReport(session.testName,
         session.className,
-        session.validationResuls.count(_.status == Failed),
-        session.validationResuls.count(_.status == Passed),
-        session.validationResuls.count(_.status == Skipped),
+        session.validationResults.count(_.status == Failed),
+        session.validationResults.count(_.status == Passed),
+        session.validationResults.count(_.status == Skipped),
         timeTaken,
         finalStatus,
-        session.validationResuls
+        session.validationResults
       )
 
       //Shut down the scenario Manager
-      context stop(sender())
+      context stop (sender())
 
       // Add the report
       reports.+=(finalReport)
       finished = finished + 1
       if (finished == total) {
-        reporter.write(reports)
+        if (session.validationResults.size > 0) {
+          reporter.write(reports)
 
+          if (hasReport) {
+            logger.info(s"Generating HTML report, located at ${session.attributes.get(DefaultConfigs.htmlReportAttr).get}")
+            val htmlReporter = new HtmlReportWriter(session.attributes)
+            htmlReporter.write(reports.filter(p => p.detailReport.size > 0))
+          }
 
-        if(hasReport){
-          logger.info(s"Generating HTML report, located at ${session.attributes.get(DefaultConfigs.htmlReportAttr).get}")
-          val htmlReporter = new HtmlReportWriter(session.attributes)
-          htmlReporter.write(reports.filter(p => p.detailReport.size > 0))
         }
+
 
         self ! ShutdownCmd
       }
 
-
-    case UserMessage(session, timestamp) =>
-      //logger.info(s"Total time taken for ${session.testName} : ${(timestamp - session.startDate) / 1000f} sec")
-      val reporter = new ConsoleReportWriter
-
-      val status = if (session.validationResuls.count(_.status == Passed) == session.validationResuls.size) {
-        Passed
-      } else if (session.validationResuls.filter(_.status == Skipped).size > 0) {
-        Skipped
-      } else Failed
-
-      val finalReport = ValidationReport(session.testName,
-        session.className,
-        session.validationResuls.count(_.status == Failed),
-        session.validationResuls.count(_.status == Passed),
-        session.validationResuls.count(_.status == Skipped),
-        (timestamp - session.startDate) / 1000,
-        status,
-        session.validationResuls
-      )
-
-      // Add the
-      reports.+=(finalReport)
-
-      finished = finished + 1
-      if (finished == total) {
-        reporter.write(reports)
-
-
-        if(hasReport){
-          logger.info(s"Generating HTML report, located at ${session.attributes.get(DefaultConfigs.htmlReportAttr).get}")
-          val htmlReporter = new HtmlReportWriter(session.attributes)
-          htmlReporter.write(reports.filter(p => p.detailReport.size > 0))
-        }
-
-        self ! ShutdownCmd
-      }
 
     case Start(scenarios) =>
       total = scenarios.size
       logger.info(s"total test scenarios : ${total}")
-      scenarios.foreach{ scn =>
+      scenarios.foreach { scn =>
 
       }
       scenarios.foreach(scn => {
@@ -128,7 +94,7 @@ class Controller(hasReport : Boolean) extends BaseActor with LazyLogging {
       total = scns.size
       logger.info(s"Total number of test suites : ${scns.length}")
       scns.foreach { scn =>
-        val scheduler = context.system.actorOf(ScenarioManager.props(scn,self))
+        val scheduler = context.system.actorOf(ScenarioManager.props(scn, self))
         scheduler ! ScenarioManager.StartScenario
 
       }
@@ -139,18 +105,18 @@ class Controller(hasReport : Boolean) extends BaseActor with LazyLogging {
 
 object Controller {
 
-  def props(hasReport : Boolean) = Props(new Controller(hasReport))
+  def props(hasReport: Boolean) = Props(new Controller(hasReport))
 }
 
 sealed trait ControllerCommand
 
 object ControllerCommand {
 
-  case class ScheduleTestSuites(testSuites : Seq[ExecutableScenario]) extends ControllerCommand
+  case class ScheduleTestSuites(testSuites: Seq[ExecutableScenario]) extends ControllerCommand
 
   case class Start(scenarios: Seq[Scenario]) extends ControllerCommand
 
-  case class EndScenario(session: Session,timeTaken : Double, finalStatus : ValidationStatus) extends ControllerCommand
+  case class EndScenario(session: Session, timeTaken: Double, finalStatus: ValidationStatus) extends ControllerCommand
 
   case object ShutdownCmd extends ControllerCommand
 

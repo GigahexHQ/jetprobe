@@ -4,7 +4,7 @@ import java.io.File
 
 import com.jetprobe.core.extractor.JsonPathBuilder
 import com.jetprobe.core.http.validation.HttpRequestConditions
-import com.jetprobe.core.sink.DataSource
+import com.jetprobe.core.storage.DataSource
 
 import scala.collection.mutable
 

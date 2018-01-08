@@ -2,8 +2,7 @@ package com.jetprobe.core.action
 
 import akka.actor.ActorRef
 import com.jetprobe.core.session.Session
-import com.jetprobe.core.sink.DataSink
-import com.jetprobe.core.validations.{ValidationExecutor, ValidationRule}
+
 
 /**
   * @author Shad.

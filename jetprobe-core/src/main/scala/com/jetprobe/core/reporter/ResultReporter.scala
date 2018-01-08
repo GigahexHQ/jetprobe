@@ -22,9 +22,5 @@ case class ValidationReport(suite : String,
                             finalSatus : ValidationStatus,
                             detailReport : Seq[ValidationResult])
 
-object ValidationReport {
-
-
-}
 
 

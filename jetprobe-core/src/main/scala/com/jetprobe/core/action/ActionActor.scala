@@ -1,10 +1,9 @@
 package com.jetprobe.core.action
 
-import akka.actor.{ActorRef, PoisonPill}
+import java.util.Date
+import akka.actor.ActorRef
 import com.jetprobe.core.runner.ScenarioManager.ExecuteNext
 import com.jetprobe.core.session.Session
-
-import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -15,9 +14,6 @@ abstract class ActionActor extends BaseActor {
   def next: Action
 
   override def receive: Receive = {
-    /*case session: Session =>
-      execute(session)
-      context stop self*/
 
     case ForwardedMessage(message,session) =>
       execute(message,session)
@@ -25,8 +21,6 @@ abstract class ActionActor extends BaseActor {
   }
 
   def execute(actionMessage: ActionMessage,session: Session) : Unit
-
-  //def execute(session: Session): Unit = ???
 
   /**
     * Makes sure that in case of an actor crash, the Session is not lost but passed to the next Action.
@@ -49,18 +43,21 @@ abstract class ActionBackedActor(next : Action,controller : ActorRef) extends Ba
 
     case ForwardedMessage(message,session) =>
 
-      logger.info("Executing the message of the current actor")
+      val startTime = new Date().getTime
 
       val updatedSession = Try{
         execute(message,session)
       } match {
-        case Success(s) => s
+        case Success(sess) =>
+          val metrics = new ActionMetrics(message.name,startTime,new Date().getTime,Failed)
+          controller ! ExecuteNext(next,sess,false,metrics)
         case Failure(ex) =>
           logger.error(ex.getMessage)
-          session
+          val metrics = new ActionMetrics(message.name,startTime,new Date().getTime,Failed)
+          controller ! ExecuteNext(next,session,false,metrics)
       }
 
-      controller ! ExecuteNext(next,updatedSession,false)
+
 
 
     case _ =>
@@ -84,3 +81,9 @@ abstract class ActionBackedActor(next : Action,controller : ActorRef) extends Ba
 
     }
 }
+
+class ActionMetrics(val name : String, val startTime : Long, val endTime : Long, state : ActionState)
+
+trait ActionState
+case object Successful extends ActionState
+case object Failed extends ActionState
