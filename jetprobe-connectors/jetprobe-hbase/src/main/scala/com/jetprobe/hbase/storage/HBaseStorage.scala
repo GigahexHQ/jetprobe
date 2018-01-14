@@ -75,7 +75,7 @@ class HBaseStorage private[jetprobe](conf: Map[String, String], table: Option[Ta
     }
   }
 
-  private[this] def usingAdmin[T](fn: Admin => T): Option[T] = {
+   def usingAdmin[T](fn: Admin => T): Option[T] = {
     val admin = getAdmin
     try {
       Some(fn(admin))
@@ -112,7 +112,8 @@ class HBaseStorage private[jetprobe](conf: Map[String, String], table: Option[Ta
 
 class HBaseConfig(conf: Map[String, String]) extends Config[HBaseStorage] {
 
-  override private[jetprobe] def getStorage: HBaseStorage = new HBaseStorage(conf)
+
+  override private[jetprobe] def getStorage(sessConf : Map[String,Any]): HBaseStorage = new HBaseStorage(conf)
 }
 
 class HBaseClusterStatus(val version: String, val deadServers: Int, val averageLoad: Double, val clusterId: String) extends DataSource
