@@ -1,4 +1,4 @@
-package com.jetprobe.rabbitmq.sink
+package com.jetprobe.rabbitmq.storage
 
 import org.scalatest.FlatSpec
 import org.scalatest._
@@ -10,15 +10,15 @@ class RabbitMQSinkTest extends FlatSpec {
   behavior of "RabbitMQSinkTest"
 
   it should "have defaultProtocol" in {
-    assert(RabbitMQSink.defaultProtocol == "http")
+    assert(RabbitMQBroker.defaultProtocol == "http")
   }
 
   it should "defaultPassword" in {
-      assert(RabbitMQSink.defaultPassword == "guest")
+      assert(RabbitMQBroker.defaultPassword == "guest")
   }
 
   it should "defaultUsername" in {
-    assert(RabbitMQSink.defaultUserName == "guest")
+    assert(RabbitMQBroker.defaultUserName == "guest")
   }
 
 
