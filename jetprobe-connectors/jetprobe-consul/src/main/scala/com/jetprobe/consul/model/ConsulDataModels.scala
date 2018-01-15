@@ -1,6 +1,6 @@
 package com.jetprobe.consul.model
 
-import com.jetprobe.core.sink.DataSource
+import com.jetprobe.core.storage.DataSource
 
 /**
   * @author Shad.

@@ -13,7 +13,7 @@ import scala.util.{Failure, Try}
 class ConsulServiceValidator extends ValidationExecutor[ConsulService]{
 
 
-  override def execute(rules: Seq[ValidationRule[ConsulService]], sink: ConsulService, config: Map[String, Any]): Seq[ValidationResult] = {
+  def execute(rules: Seq[ValidationRule[ConsulService]], sink: ConsulService, config: Map[String, Any]): Seq[ValidationResult] = {
 
     val consulClient = parseAll(Seq(sink.host,sink.port),config)//.map(res => new ConsulClient(res(sink.host.value),res(sink.port.value).toInt))
     consulClient match {
@@ -25,9 +25,6 @@ class ConsulServiceValidator extends ValidationExecutor[ConsulService]{
         rules.map {
           case vr : ServiceValidationRule[_] => ConsulServiceValidator.validateServiceInfo(vr,mayBeService(vr.service))
         }
-        /*rules.map{ vr =>
-          case vr : ServiceValidationRule[_] => ConsulServiceValidator.validateServiceInfo(vr,mayBeService(vr.name))
-        }*/
 
     }
 
@@ -63,8 +60,8 @@ object ConsulServiceValidator {
   }
 
   def validateServiceInfo(rule : ServiceValidationRule[_],info : Either[Exception,ServiceInfo]) : ValidationResult = {
-
-    ValidationExecutor.validate[ServiceInfo](info,rule){
+    ???
+    /*ValidationExecutor.validate[ServiceInfo](info,rule){
       case (sInfo,vRule) =>
         val ruleImpl: ServiceValidationRule[_] = vRule.asInstanceOf[ServiceValidationRule[_]]
         if (ruleImpl.expected == ruleImpl.actual(sInfo)) {
@@ -74,7 +71,7 @@ object ConsulServiceValidator {
           val condition = s"Service name : ${ruleImpl.service}"
           ValidationResult.failed(ruleImpl.copy(name = condition), "failed")
         }
-    }
+    }*/
 
   }
 

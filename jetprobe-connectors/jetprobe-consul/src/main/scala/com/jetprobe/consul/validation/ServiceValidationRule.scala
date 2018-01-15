@@ -2,7 +2,7 @@ package com.jetprobe.consul.validation
 
 import com.jetprobe.consul.ConsulService
 import com.jetprobe.consul.model.ServiceInfo
-import com.jetprobe.core.validations.ValidationRule
+import com.jetprobe.core.validations.{ValidationResult, ValidationRule}
 import sourcecode.{FullName, Line}
 
 /**
@@ -16,6 +16,7 @@ case class ServiceValidationRule[U <: Any](expected: U,
                                           )
   extends ValidationRule[ConsulService]{
 
+  override def validate(config: Map[String, Any], storage: ConsulService): ValidationResult = ???
 
 }
 

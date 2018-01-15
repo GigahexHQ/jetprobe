@@ -1,14 +1,10 @@
 package com.jetprobe.hadoop.storage
 
-import java.io.File
 import java.net.URI
 
-import com.jetprobe.core.action.builder.ActionBuilder
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
-import com.jetprobe.core.storage.{Storage, StorageQuery}
+import com.jetprobe.core.storage.Storage
 import com.jetprobe.core.structure.Config
-import com.jetprobe.core.validations.ValidationRule
-import com.jetprobe.hadoop.actions._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ContentSummary, FileSystem, Path}
 
