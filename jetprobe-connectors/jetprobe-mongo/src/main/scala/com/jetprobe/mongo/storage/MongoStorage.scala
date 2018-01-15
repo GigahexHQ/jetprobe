@@ -1,128 +1,201 @@
-package com.jetprobe.mongo.sink
+package com.jetprobe.mongo.storage
 
-
-import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
-import com.jetprobe.core.storage.DataSink
-import com.jetprobe.mongo.action._
+import com.jetprobe.core.storage.Storage
+import com.jetprobe.core.structure.Config
+import org.json4s._
 import com.jetprobe.mongo.validation.MongoConditionalQueries
+import com.mongodb.client.model.IndexModel
+import com.mongodb.client.result.DeleteResult
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.{MongoClient, MongoCollection, MongoDatabase}
+import org.mongodb.scala.{Completed, MongoClient, MongoCollection, MongoDatabase}
 import org.mongodb.scala.bson.collection.mutable.Document
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.concurrent.Await
+import scala.util.{Failure, Success, Try}
+
 
 /**
   * @author Shad.
   */
-case class MongoSink private(val db: Expr, val collection: Expr, val host: Expr, config : Map[String,Any] = Map.empty)
-  extends DataSink with MongoConditionalQueries {
+case class MongoStorage private[jetprobe](uri: String, conf: Map[String, Any])
+  extends Storage with MongoConditionalQueries {
 
-  import MongoSink._
+  implicit val formats = DefaultFormats
 
   val batchSize = 512
+  val idxStr = """{ "idx" : 1 }"""
+  private val serverStatsCommand = "{ serverStatus: 1 }"
+  private val dbListCommand = "{ listDatabases: 1 }"
+  val dbStatsCommand = "{dbStats: 1, scale: 1024 }"
 
-  lazy val mongoClient = getMongoClient(host,config)
+  private def collectionStatsCommand(collection: String) = s"{collStats :\'${collection}\', scale: 1024, verbose : false}"
 
-  def load(records: Iterator[String],database : String, collectionName : String): Unit = {
-    val collectionOpt = getCollectionOpt(host,Expr(database),Expr(collectionName),config)
-    collectionOpt match {
-      case Some(col) =>
+
+  lazy private val mongoClient: MongoClient = MongoClient(uri)
+
+  def load(records: Iterator[String], database: String, collectionName: String): Unit = {
+
+    ExpressionParser.parseAll(Seq(Expr(database), Expr(collectionName)), conf) match {
+      case Left(ex) => throw ex
+      case Right(mappedVals) =>
+        val mongoCollection: MongoCollection[Document] = mongoClient.getDatabase(mappedVals(database)).getCollection(mappedVals(collectionName))
         records
           .grouped(batchSize)
           .foreach(docs => {
-            val observable =
-              col.insertMany(docs.map(str => Document(BsonDocument(str))))
-            Await.result(observable.head(), 10 seconds)
+            val observable = mongoCollection.insertMany(docs.map(str => Document(BsonDocument(str))))
+            Await.result(observable.head(), 100 seconds)
           })
-//        logger.info(s"Total docs inserted : ${record.length}")
-
-      case None =>
-        logger.error(s"Unable to fetch the collection for the ${collection.value}")
     }
-
-    def closeClient : Unit = {
-      mongoClient match {
-        case Some(client) => client.close()
-        case None => logger.warn("No Mongo client found to close.")
-      }
-    }
-
-
   }
 
-  //Utility methods for creating action builders
-  def createDatabase(db : String) : MongoDBActionBuilder = new MongoDBActionBuilder(CreateDatabase(db),this)
+  private def getResult(db: MongoDatabase, cmd: String): Future[Document] = {
+    val mongoCmd = org.bson.BsonDocument.parse(cmd)
+    db.runCommand(mongoCmd).head().map( d => new Document(d.toBsonDocument))
+  }
 
-  def createCollection(db : String,collection : String,indexFields : Seq[String] = Seq.empty) : MongoDBActionBuilder =
-    new MongoDBActionBuilder(CreateCollection(db,collection,indexFields),this)
+  def getDatabaseStats(db : String) : Option[Document] = {
+    usingDatabase(db) {d =>
+      val futureResult = getResult(d,dbStatsCommand)
+      Await.result(futureResult,10.seconds)
+    }
+  }
 
-  def dropDatabase(db : String) : MongoDBActionBuilder = new MongoDBActionBuilder(DropDatabase(db),this)
+  /**
+    * Create collection with the given name
+    *
+    * @param db
+    * @param collection
+    * @param indexFields
+    */
+  def createCollection(db: String, collection: String, indexFields: Seq[String] = Seq.empty): Unit = {
+    usingDatabase(db) { rdb =>
+      ExpressionParser.parse(collection, conf) map { c =>
+        rdb.createCollection(collection).subscribe((c: Completed) => logger.info(s"collection ${collection} created."))
+        val col: MongoCollection[Document] = rdb.getCollection(c)
 
-  def dropCollection(db : String,collection : String) : MongoDBActionBuilder = new MongoDBActionBuilder(DropCollection(db,collection),this)
+        if (indexFields.nonEmpty) {
+          val indexs = indexFields.map(idx => new IndexModel(BsonDocument(idxStr.replace("idx", idx))))
+          col.createIndexes(indexs).subscribe((s: String) => logger.info(s"index ${s} created."))
+        }
 
-  def removeAllDocuments(db : String,collection : String) : MongoDBActionBuilder = new MongoDBActionBuilder(RemoveAllDocuments(db,collection),this)
-
-  def insertDocuments(db : String, collection : String,rows : Seq[String]) : MongoDBActionBuilder = new MongoDBActionBuilder(InsertRows(db,collection,rows.toIterator),this)
+      }
 
 
+    }
+  }
 
+  /**
+    * Drop the database from Mongo
+    *
+    * @param db An expression/value representing the database name
+    */
+  def dropDatabase(db: String): Unit = {
+    usingDatabase(db) { rdb =>
+      rdb.drop().subscribe(
+        {
+          (c: Completed) => logger.info(s"Database ${rdb.name} dropped.")
+        }
+      )
+    }
+  }
+
+  /**
+    * Drops the collection in the specified database
+    *
+    * @param db             database name
+    * @param collectionName collection to be dropped
+    */
+  def dropCollection(db: String, collectionName: String): Unit = {
+    usingCollection(db, collectionName)(col => col.drop().subscribe({
+      (c: Completed) => logger.info(s"collection ${col.namespace.getCollectionName} dropped.")
+    }))
+  }
+
+  /**
+    * Utility func to support collection based actions
+    *
+    * @param db
+    * @param collectionName
+    * @param fn
+    * @tparam T
+    * @return
+    */
+  def usingCollection[T](db: String, collectionName: String)(fn: MongoCollection[Document] => T): Option[T] = {
+    ExpressionParser.parse(collectionName, conf) match {
+      case Some(c) => usingDatabase(db) { d =>
+        val mongoCollection: MongoCollection[Document] = d.getCollection(c)
+        fn(mongoCollection)
+      }
+
+      case None => None
+    }
+  }
+
+  /**
+    * Utility func to support client based IO actions
+    *
+    * @param fn Client handler function
+    * @tparam T return type
+    * @return
+    */
+  def usingMongoClient[T](fn: MongoClient => T): Option[T] = {
+    Try {
+      fn(mongoClient)
+    } match {
+      case Success(v) => Some(v)
+      case Failure(ex) =>
+        logger.error(ex.getMessage)
+        None
+    }
+  }
+
+  def usingDatabase[T](name: String)(fn: MongoDatabase => T): Option[T] = {
+    ExpressionParser.parse(name, conf) match {
+      case Some(db) => usingMongoClient(_.getDatabase(db)).map(database => fn(database))
+      case _ => None
+    }
+  }
+
+  /**
+    * Remove all the documents from the collection
+    *
+    * @param db
+    * @param collectionName
+    */
+  def truncate(db: String, collectionName: String): Unit = {
+    usingCollection(db, collectionName) { col =>
+      col.deleteMany(BsonDocument("{}"))
+        .subscribe((result: DeleteResult) =>
+          logger.info(s"collection ${col.namespace.getCollectionName} truncated. ${result.getDeletedCount} rows deleted."))
+    }
+  }
 
 }
 
-object MongoSink {
+/**
+  * Config for MongoDB : uri format => mongodb://<host>:<port>
+  *
+  * @param uri
+  */
+class MongoDBConf(uri: String) extends Config[MongoStorage] {
+
+  override private[jetprobe] def getStorage(sessionConf: Map[String, Any]): MongoStorage = {
+    ExpressionParser.parse(uri, sessionConf) match {
+      case Some(resolvedURI) => new MongoStorage(resolvedURI, sessionConf)
+      case None => throw new IllegalArgumentException(s"Unable to parse MongoDB uri : ${uri}")
+    }
+  }
+
+}
+
+object MongoStorage {
 
   import org.json4s._
   import org.json4s.jackson.JsonMethods._
 
-  def apply(uri: String): MongoSink = {
-    val splitUri = uri.substring(10).split("/")
-    val hostname = "mongodb://" + splitUri(0)
-    val database = if (splitUri.length > 1) Expr(splitUri(1)) else Expr("")
-    val collection = if (splitUri.length > 2) Expr(splitUri(2)) else Expr("")
-    MongoSink(database, collection, Expr(hostname))
-  }
-
-
-
-  def getMongoClient(host : Expr,config : Map[String,Any]) : Option[MongoClient] = {
-
-    ExpressionParser.parse(host.value, config)
-      .map { resolvedHost =>
-        MongoClient(resolvedHost)
-      }
-  }
-
-  /**
-    * Get the collection post resolving the expression for collection
-    * @param host
-    * @param db
-    * @param collection
-    * @param config
-    * @return
-    */
-  def getCollectionOpt(host : Expr, db : Expr, collection : Expr, config: Map[String, Any]): Option[MongoCollection[Document]] = {
-    val parsedDb = getDatabaseOpt(host,db, config)
-    parsedDb.flatMap { mdb =>
-      ExpressionParser.parse(collection.value, config).map(coll => mdb.getCollection(coll))
-    }
-  }
-
-  /**
-    * Extract the database post parsing of the expression
-    * @param host
-    * @param db
-    * @param config
-    * @return
-    */
-  def getDatabaseOpt(host : Expr, db : Expr, config: Map[String, Any]): Option[MongoDatabase] = {
-    ExpressionParser.parse(host.value, config)
-      .map(host => MongoClient(host))
-      .flatMap { client =>
-        ExpressionParser.parse(db.value, config).map(resolvedDb => client.getDatabase(resolvedDb))
-      }
-  }
 
   def jsonStrToMap0(jsonStr: String): Map[String, Any] = {
     implicit val formats = org.json4s.DefaultFormats
