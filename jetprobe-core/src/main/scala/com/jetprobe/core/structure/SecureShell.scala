@@ -1,7 +1,7 @@
 package com.jetprobe.core.structure
 
 import com.jetprobe.core.action.builder.{ActionBuilder, SSHActionBuilder, SecuredClient}
-import com.jetprobe.core.action.{ExecuteCmd, ExecuteCommand, SSHConfig}
+import com.jetprobe.core.action.SSHConfig
 
 /**
   * @author Shad.

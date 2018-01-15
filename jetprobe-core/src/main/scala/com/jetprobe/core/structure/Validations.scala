@@ -18,11 +18,8 @@ trait Validations[B] extends Execs[B]{
     * @return The Validation rule
     */
   def validateWith[S <: Storage](config: Config[S])(fnRuleBuilder : S => ValidationRule[S]) = {
-    val storage = config.getStorage
-    exec(new ValidationBuilder[S](storage,Seq(fnRuleBuilder(storage))))
+    exec(new ValidationBuilder[S](config,fnRuleBuilder))
   }
-
-
 
 
   def given[D,S <: Storage](query : StorageQuery[S,D])(fnRule : Seq[D] => Any)
@@ -34,7 +31,8 @@ trait Validations[B] extends Execs[B]{
 
   def given[D,S <: Storage](property : Option[D])(fnRule : D => Any)
                            (implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationRule[S] =
-    new MayBePropertyValidation[D,S](property,fnRule,line,fullName)
+
+      new MayBePropertyValidation[D,S](property,fnRule,line,fullName)
 
 
 

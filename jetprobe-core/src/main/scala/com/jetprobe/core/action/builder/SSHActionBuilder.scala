@@ -70,7 +70,6 @@ class SecuredClient(ssh: SSHClient,actorSystem: ActorSystem) extends LazyLogging
 
       val errorStream = new StreamLog(run.getErrorStream)
       val infoStream = new StreamLog(run.getInputStream)
-      logger.info("Starting the error and info log streams.")
       errorStream.start()
       infoStream.start()
 

@@ -3,14 +3,18 @@ package com.jetprobe.core.fs
 import java.io._
 import java.nio.channels.FileChannel
 
+import com.jetprobe.core.parser.ExpressionParser
 import com.jetprobe.core.storage.{Storage, StorageQuery}
+import com.jetprobe.core.structure.Config
 import com.jetprobe.core.validations.ValidationRule
+
+import scala.io.Source
 
 
 /**
   * @author Shad.
   */
-class FileStorage(path: String) extends Storage {
+class FileStorage private[jetprobe](path: String) extends Storage {
 
   /**
     * Move the file to the destination
@@ -55,6 +59,14 @@ class FileStorage(path: String) extends Storage {
     }
   }
 
+  def usingFile[T](fn : File => T) : T = {
+    fn(new File(path))
+  }
+
+  def lines() : Iterator[String] = {
+    Source.fromFile(new File(path)).getLines()
+  }
+
   /**
     * Delete the file
     * @return true if success else false
@@ -62,4 +74,14 @@ class FileStorage(path: String) extends Storage {
   def rm : Boolean = new File(path).delete()
 
 
+}
+
+class FilePath(path : String) extends Config[FileStorage] {
+
+  override private[jetprobe] def getStorage(sessionConf: Map[String, Any]) : FileStorage = {
+    ExpressionParser.parse(path,sessionConf) match {
+      case Some(p) => new FileStorage(p)
+      case None => throw new IllegalArgumentException(s"Unable to parse the expression : ${path}")
+    }
+  }
 }

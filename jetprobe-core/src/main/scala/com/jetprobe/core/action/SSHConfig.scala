@@ -15,11 +15,6 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier
   */
 
 
-trait SSHActionDef
-
-
-case class ExecuteCmd(cmd: String) extends SSHActionDef
-
 case class SSHConfig(hostName: String,
                      user: String,
                      password: String)

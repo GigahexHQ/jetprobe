@@ -22,6 +22,6 @@ class Pause(duration : FiniteDuration, next : Action,actorSystem : ActorSystem,s
     val startTime = new Date().getTime
     val metrics = new ActionMetrics(s"paused for ${duration.length}ms", startTime, startTime + duration.length, Successful)
     actorSystem.scheduler.scheduleOnce(duration,scenarioController,ExecuteNext(next,session,true,metrics))
-    //scenarioController ! ExecuteWithDelay(next,duration)
+
   }
 }

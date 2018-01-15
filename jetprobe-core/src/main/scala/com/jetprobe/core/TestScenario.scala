@@ -20,7 +20,7 @@ trait TestScenario extends CoreDsl{
     */
   def actions : ScenarioBuilder
 
-  def assertEquals(expected : Any,actual : sourcecode.Text[Any])(implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationResult = {
+  def assertEquals[T](expected : T,actual : sourcecode.Text[T])(implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationResult = {
     if(expected == actual.value){
       ValidationResult("sample",Passed)
     }

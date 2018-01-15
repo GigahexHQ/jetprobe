@@ -39,8 +39,7 @@ class HttpRequestActionBuilder(requestBuilder : HttpRequestBuilder) extends Acti
               session
 
             case Success(response) =>
-              //logger.info(s"received response : ${response.body.string}")
-              logger.info(s"Response status : ${response.statusCode.get}. Http Request [${reqBuilder.method.toString}]: ${httpRequest.uri}")
+
               if(response.statusCode.get == 400 || response.statusCode.get == 404)
                 logger.error(s"Error response : ${response.body.string}")
               val savedVariables = httpRequest.responseInfoExtractor match {

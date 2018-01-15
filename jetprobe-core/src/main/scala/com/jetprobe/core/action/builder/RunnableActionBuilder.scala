@@ -2,15 +2,15 @@ package com.jetprobe.core.action.builder
 
 import com.jetprobe.core.action.{Action, ActionMessage, SelfExecutableAction}
 import com.jetprobe.core.storage.Storage
-import com.jetprobe.core.structure.ScenarioContext
+import com.jetprobe.core.structure.{Config, ScenarioContext}
 
 /**
   * @author Shad.
   */
-class RunnableActionBuilder[T <: Storage](storage: T, handler: T => Unit) extends ActionBuilder {
+class RunnableActionBuilder[T <: Storage](storageConf: Config[T], handler: T => Unit) extends ActionBuilder {
 
 
-  val name: String = s"RunnableAction-${storage.getClass.getSimpleName}"
+  val name: String = "RunnableAction"
 
   /**
     *
@@ -20,13 +20,14 @@ class RunnableActionBuilder[T <: Storage](storage: T, handler: T => Unit) extend
     */
   override def build(ctx: ScenarioContext, next: Action): Action = {
 
-    val runnableMessage = RunnableActionMessage(storage, handler)
+    val runnableMessage = RunnableActionMessage(storageConf, handler)
 
     new SelfExecutableAction(name, runnableMessage, next, ctx.system, ctx.controller)({
       case (message, sess) => message match {
         case r: RunnableActionMessage[T] =>
-          r.handler.apply(r.sink)
-          r.sink.cleanup
+          val storage = r.storageConf.getStorage(sess.attributes)
+          r.handler.apply(r.storageConf.getStorage(sess.attributes))
+          storage.cleanup
           sess
 
       }
@@ -36,8 +37,8 @@ class RunnableActionBuilder[T <: Storage](storage: T, handler: T => Unit) extend
   }
 }
 
-case class RunnableActionMessage[T <: Storage](sink: T, handler: T => Unit) extends ActionMessage {
+case class RunnableActionMessage[T <: Storage](storageConf: Config[T], handler: T => Unit) extends ActionMessage {
 
-  override def name: String = s"Runnable Action on target type: ${sink.getClass.getSimpleName}"
+  override def name: String = s"Runnable Action on target type: ${storageConf.getClass.getSimpleName}"
 
 }

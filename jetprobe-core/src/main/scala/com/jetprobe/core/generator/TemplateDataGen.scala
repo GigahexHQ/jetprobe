@@ -21,6 +21,8 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends 
   val startPattern = "${"
   val endPattern = "}"
 
+  var sequenceN = 0
+
   private[this] def getField(str: String): String = str.substring(2).takeWhile(ch => ch != '}')
 
   private[this] def getRegex(str: String): Regex = ("""\$\{""" + str + """\}""").r
@@ -38,15 +40,17 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends 
         def next: String = {
           var temp = templateStr
           val randomVal = dataset(Random.nextInt(datasetSize))
-          regexMatches.foreach {
+
+          regexMatches.toSet.foreach {
             str: String =>
               val strPattern = getField(str)
-              val fieldVal = {
+              val fieldVal = randomGen(strPattern,randomVal)
+              /*val fieldVal = {
                 if (strPattern.equals("Random.UUID"))
                   UUID.randomUUID().toString
                 else
                   randomVal.getOrElse(strPattern, str)
-              }
+              }*/
               temp = getRegex(strPattern).replaceAllIn(temp, fieldVal)
           }
           temp
@@ -58,5 +62,18 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends 
     }
 
   }
+
+  private def randomGen(pattern : String,dataset : Map[String,String]) : String = pattern match {
+    case "sequence.number" =>
+      sequenceN = sequenceN + 1
+      sequenceN.toString
+    case "random.uuid" =>
+      UUID.randomUUID().toString
+
+    case _ => dataset(pattern).trim
+
+
+  }
+
 
 }

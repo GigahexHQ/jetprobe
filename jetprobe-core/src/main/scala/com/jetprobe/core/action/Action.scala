@@ -24,17 +24,6 @@ trait ActionMessage {
 
 }
 
-trait PipedAction extends Action {
-
-  def next: Action
-
-}
-
-class DelegatorAction(val name: String, actor: ActorRef) extends Action {
-
-  override def execute(session: Session): Unit = actor ! session
-}
-
 case class ForwardedMessage(message: ActionMessage, session: Session)
 
 class SelfExecutableAction(val name : String, val message: ActionMessage, next: Action, actorSystem: ActorSystem,scenarioManager: ActorRef)
