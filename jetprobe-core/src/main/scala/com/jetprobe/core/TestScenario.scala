@@ -32,9 +32,3 @@ trait TestScenario extends CoreDsl{
   }
 
 }
-
-abstract class JTestScenario extends TestScenario {
-
-
-
-}

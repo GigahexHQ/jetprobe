@@ -17,7 +17,7 @@ trait Execs[B] {
   def exec(actionBuilder: ActionBuilder): B = chain(List(actionBuilder))
   def exec(actionBuilders: ActionBuilder*): B = chain(actionBuilders.toSeq.reverse)
 
-  def doWith[S <: Storage](config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableActionBuilder[S](config.getStorage,handler)))
+  def doWith[S <: Storage](config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableActionBuilder[S](config,handler)))
 
    def chain(newActionBuilders: Seq[ActionBuilder]): B //= newInstance(newActionBuilders.toList ::: actionBuilders)
 }

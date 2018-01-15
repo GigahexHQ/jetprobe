@@ -241,7 +241,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons failed")("cancel"),
-              s"${vrs.count(_.status == Failed)} Validationss for ${testName}"),
+              s"${vrs.count(_.status == Failed)} Validations for ${testName}"),
             div(cls := "collapsible-body")(
               for (failedTest <- vrs.filter(_.status == Failed)) yield {
                 p(s"${failedTest.message}")
