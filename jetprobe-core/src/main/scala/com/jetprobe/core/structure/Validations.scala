@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.builder.{PropertyValidation, ValidationBuilder}
+import com.jetprobe.core.action.builder.{ActionBuilder, PropertyValidation, RegisterValidation, ValidationBuilder}
 import com.jetprobe.core.storage.{DataSource, Storage, StorageQuery}
 import com.jetprobe.core.validations._
 
@@ -20,6 +20,10 @@ trait Validations[B] extends Execs[B]{
   def validateWith[S <: Storage](config: Config[S])(fnRuleBuilder : S => ValidationRule[S]) = {
     exec(new ValidationBuilder[S](config,fnRuleBuilder))
   }
+
+  def validateWith[S <: Storage](config: Config[S],description : String)(testFn : S => Any) =
+    exec(new RegisterValidation[S](config,description,testFn))
+
 
 
   def given[D,S <: Storage](query : StorageQuery[S,D])(fnRule : Seq[D] => Any)

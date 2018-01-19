@@ -23,10 +23,10 @@ class ConsoleReportWriter extends ResultReporter {
       s" Skipped : ${results.count(_.status == Skipped)}")
     results.filter(_.status.equals(Failed)).foreach { res =>
 
-      println(s"${res.message} ")
+      println(s"${res.testName} failed. ${res.message} ")
     }
     results.filter(_.status.equals(Skipped)).foreach { res =>
-      println(s" ${res.message}")
+      println(s"${res.testName} Skipped. ${res.message}")
     }
   }
 
