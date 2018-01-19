@@ -3,7 +3,7 @@ A mini-framework for creating and executing validation rules to test the data pi
 different infrastructure components (databases, file system, message broker, etc.)
 
 ## User Documentation
-For user guide, refer to the (documentation [website](https://jetprobe.com) . The corresponding repo for the doc is available
+For user guide, refer to the documentation [website](https://jetprobe.com) . The corresponding repo for the doc is available
 [here](https://github.com/jetprobe/jetprobe-docs).
 
 ## Developers Documentation
