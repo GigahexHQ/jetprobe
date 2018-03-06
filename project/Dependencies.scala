@@ -99,6 +99,12 @@ object Dependencies {
   private val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaActor.revision % "test"
   private val mockitoCore = "org.mockito" % "mockito-core" % "2.3.11" % "test"
 
+  /*****************************
+    *  Reporting dependencies
+    ****************************/
+  private val extentReport = "com.aventstack" % "extentreports" % "3.1.2"
+
+
   val coreDependencies = Seq(
     sshLib,
     fastParse,
@@ -122,8 +128,13 @@ object Dependencies {
     circeCore,
     circeParser,
     circeGeneric,
-    junit
+    junit,
+    extentReport
   )
+
+
+
+  //val reportDependencies = Seq(extentReport)
 
   val testDependencies = Seq(scalactic,scalaTest, scalaCheck, akkaTestKit, mockitoCore)
 }
