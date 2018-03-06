@@ -4,7 +4,8 @@ import java.io.File
 
 import com.jetprobe.core.extractor.JsonPathBuilder
 import com.jetprobe.core.http.validation.HttpRequestConditions
-import com.jetprobe.core.storage.DataSource
+import com.jetprobe.core.storage.{DataSource, Storage}
+import com.jetprobe.core.structure.Config
 
 import scala.collection.mutable
 
@@ -18,7 +19,7 @@ case class HttpRequestBuilder(
                                method : RequestType,
                                body: Option[String] = None,
                                responseInfoExtractor: Option[Seq[JsonPathBuilder]] = None
-                             ) extends DataSource with HttpRequestConditions{
+                             ) extends Storage with HttpRequestConditions with Config[HttpRequestBuilder]{
 
   def body(bd: String): HttpRequestBuilder =  this.copy(body = Some(bd))
 
@@ -32,5 +33,5 @@ case class HttpRequestBuilder(
     this.copy(responseInfoExtractor = Some(seqExtractors))
   }
 
-
+  override private[jetprobe] def getStorage(sessionConf: Map[String, Any]) = this
 }

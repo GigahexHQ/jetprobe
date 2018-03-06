@@ -5,7 +5,7 @@ import java.util.Scanner
 
 import akka.actor.ActorSystem
 import com.jetprobe.core.action._
-import com.jetprobe.core.structure.ScenarioContext
+import com.jetprobe.core.structure.PipelineContext
 import com.typesafe.scalalogging.LazyLogging
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -26,7 +26,7 @@ class SSHActionBuilder(fnShellAction: SecuredClient => Unit, sSHConfig: SSHConfi
     * @return the resulting action
     */
 
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
     val sshMessage = SSHMessage(fnShellAction, sSHConfig, next)
 
 

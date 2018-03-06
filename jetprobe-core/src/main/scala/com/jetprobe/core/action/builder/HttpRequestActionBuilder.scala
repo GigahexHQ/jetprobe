@@ -4,7 +4,7 @@ import com.jetprobe.core.action.HttpRequestAction.{HttpRequestMessage, handleHtt
 import com.jetprobe.core.action._
 import com.jetprobe.core.http.HttpRequestBuilder
 import com.jetprobe.core.session.Session
-import com.jetprobe.core.structure.ScenarioContext
+import com.jetprobe.core.structure.PipelineContext
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,7 +19,7 @@ class HttpRequestActionBuilder(requestBuilder : HttpRequestBuilder) extends Acti
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
     new SelfExecutableAction(name,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
   }
 

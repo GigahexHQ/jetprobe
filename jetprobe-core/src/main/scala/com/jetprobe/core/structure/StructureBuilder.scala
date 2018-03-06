@@ -14,7 +14,7 @@ trait StructureBuilder[B <: StructureBuilder[B]]
     with SecureShell[B]
     with Validations[B] {
 
-  private[jetprobe] def build(ctx: ScenarioContext,
+  private[jetprobe] def build(ctx: PipelineContext,
                               chainNext: Action): Action = {
     actionBuilders.foldLeft(chainNext) { (next, actionBuilder) =>
       actionBuilder.build(ctx, next)

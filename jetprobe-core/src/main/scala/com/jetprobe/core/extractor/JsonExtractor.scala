@@ -26,9 +26,10 @@ object JsonPathExtractor extends DataExtractor[String,Map[String,Any]]{
 
 class JsonPathBuilder(val path : String, saveAs : String) extends LazyLogging{
 
-  def extractFrom(json : String) : Map[String,Any] = {
+  def extractFrom[T](json : String) : Map[String,T] = {
     val document = Configuration.defaultConfiguration.jsonProvider.parse(json)
-    val extractedVal = Try {JsonPath.read[Any](document,path)}
+    val result = JsonPath.using(Configuration.defaultConfiguration).parse(json).read[T](path)
+    val extractedVal = Try {result}
     extractedVal match {
       case Success(value) =>
         logger.info(s"Extracted value for path ${path} = $value")
@@ -36,7 +37,7 @@ class JsonPathBuilder(val path : String, saveAs : String) extends LazyLogging{
       case Failure(ex) =>
         logger.error(s"Exception occurred while extracting path = ${path}. Message : ${ex.getMessage}")
         logger.error(s"Unable to parse string : ${json}")
-        Map.empty[String,Any]
+        Map.empty
     }
 
   }

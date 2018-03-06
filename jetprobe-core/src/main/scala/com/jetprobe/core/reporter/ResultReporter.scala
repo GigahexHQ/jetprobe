@@ -1,5 +1,7 @@
 package com.jetprobe.core.reporter
 
+import java.util.Date
+
 import com.jetprobe.core.validations.{ValidationResult, ValidationStatus}
 
 /**
@@ -18,7 +20,8 @@ case class ValidationReport(suite : String,
                             failedCount : Int,
                             successCount : Int,
                             skippedCount : Int,
-                            timeTaken : Double,
+                            startTime : Date,
+                            endTime : Date,
                             finalSatus : ValidationStatus,
                             detailReport : Seq[ValidationResult])
 

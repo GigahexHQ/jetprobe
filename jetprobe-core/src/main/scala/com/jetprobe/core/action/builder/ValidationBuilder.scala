@@ -3,7 +3,7 @@ package com.jetprobe.core.action.builder
 import com.jetprobe.core.Predef.Session
 import com.jetprobe.core.action._
 import com.jetprobe.core.storage.Storage
-import com.jetprobe.core.structure.{Config, ScenarioContext}
+import com.jetprobe.core.structure.{Config, PipelineContext}
 import com.jetprobe.core.validations.{ValidationResult, ValidationRule}
 
 import scala.util.{Failure, Success, Try}
@@ -20,7 +20,7 @@ class ValidationBuilder[S <: Storage](storeConfig: Config[S], rulesBuilder: S =>
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
     new SelfExecutableAction(name, ValidationMessage(storeConfig, rulesBuilder, name), next, ctx.system, ctx.controller)(runValidator)
   }
 
@@ -48,7 +48,7 @@ case class ValidationMessage[S <: Storage](storeConfig: Config[S], rulesBuilder:
 
 class RegisterValidation[S <: Storage](storeConfig: Config[S], description: String, fnTest: S => Any) extends ActionBuilder {
 
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
 
     val message = ValidateStorage(storeConfig, fnTest, description)
 
@@ -88,7 +88,7 @@ class PropertyValidation[D](val property: D, val fn: D => Any) extends ActionBui
 
   val name: String = getClass.getSimpleName
 
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
     new SelfExecutableAction(name, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
   }
 

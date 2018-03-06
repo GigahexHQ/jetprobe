@@ -2,7 +2,7 @@ package com.jetprobe.core.action.builder
 
 import com.jetprobe.core.action.{Action, ActionMessage, SelfExecutableAction}
 import com.jetprobe.core.storage.Storage
-import com.jetprobe.core.structure.{Config, ScenarioContext}
+import com.jetprobe.core.structure.{Config, PipelineContext}
 
 /**
   * @author Shad.
@@ -18,7 +18,7 @@ class RunnableActionBuilder[T <: Storage](storageConf: Config[T], handler: T => 
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
 
     val runnableMessage = RunnableActionMessage(storageConf, handler)
 

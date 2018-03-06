@@ -4,7 +4,7 @@ import com.jetprobe.core.action._
 import com.jetprobe.core.generator.DataGenerator
 import com.jetprobe.core.session.Session
 import com.jetprobe.core.storage.Storage
-import com.jetprobe.core.structure.{Config, ScenarioContext}
+import com.jetprobe.core.structure.{Config, PipelineContext}
 
 /**
   * @author Shad.
@@ -31,7 +31,7 @@ class IngestionBuilder(datasetGen : DataGenerator, writer : Iterator[String] => 
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
 
     val msg = IngestActionMessage(datasetGen)
     new SelfExecutableAction(name,msg,next,ctx.system,ctx.controller) (handleIngest)
@@ -55,7 +55,7 @@ class StorageIOBuilder[S <: Storage](datasetGen : DataGenerator,conf : Config[S]
 
   }
 
-  override def build(ctx: ScenarioContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Action): Action = {
 
     new SelfExecutableAction(name,this,next,ctx.system,ctx.controller)(handleIngest)
 

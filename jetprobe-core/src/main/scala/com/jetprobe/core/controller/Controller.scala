@@ -1,14 +1,17 @@
 package com.jetprobe.core.controller
 
+import java.util.Date
+
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.actor.{ActorSystem, OneForOneStrategy, PoisonPill, Props}
 import com.jetprobe.core.action.BaseActor
 import com.jetprobe.core.common.DefaultConfigs
 import com.jetprobe.core.controller.ControllerCommand.{EndScenario, ScheduleTestSuites, ShutdownCmd, Start}
+import com.jetprobe.core.reporter.extent.ExtentReporter
 import com.jetprobe.core.reporter.{ConsoleReportWriter, HtmlReportWriter, ValidationReport}
 import com.jetprobe.core.runner.ScenarioManager
 import com.jetprobe.core.session.{Session, UserMessage}
-import com.jetprobe.core.structure.{ExecutableScenario, Scenario}
+import com.jetprobe.core.structure.{ExecutablePipeline, Scenario}
 import com.jetprobe.core.validations.{Failed, Passed, Skipped, ValidationStatus}
 import com.typesafe.scalalogging.LazyLogging
 
@@ -33,13 +36,14 @@ class Controller(hasReport: Boolean) extends BaseActor with LazyLogging {
 
   override def receive: Receive = {
 
-    case EndScenario(session, timeTaken: Double, finalStatus) =>
+    case EndScenario(session, startTime,endTime, finalStatus) =>
       val finalReport = ValidationReport(session.testName,
         session.className,
         session.validationResults.count(_.status == Failed),
         session.validationResults.count(_.status == Passed),
         session.validationResults.count(_.status == Skipped),
-        timeTaken,
+        startTime,
+        endTime,
         finalStatus,
         session.validationResults
       )
@@ -58,7 +62,16 @@ class Controller(hasReport: Boolean) extends BaseActor with LazyLogging {
             logger.info(s"Generating HTML report, located at ${session.attributes.get(DefaultConfigs.htmlReportAttr).get}")
             val htmlReporter = new HtmlReportWriter(session.attributes)
             htmlReporter.write(reports.filter(p => p.detailReport.size > 0))
+
+            ExtentReporter.build(session.attributes) match {
+              case Some(extentReporter) => extentReporter.write(reports)
+              case None =>
+                logger.error("Unable to generate extent reports")
+            }
+
+
           }
+
 
         }
 
@@ -112,11 +125,11 @@ sealed trait ControllerCommand
 
 object ControllerCommand {
 
-  case class ScheduleTestSuites(testSuites: Seq[ExecutableScenario]) extends ControllerCommand
+  case class ScheduleTestSuites(testSuites: Seq[ExecutablePipeline]) extends ControllerCommand
 
   case class Start(scenarios: Seq[Scenario]) extends ControllerCommand
 
-  case class EndScenario(session: Session, timeTaken: Double, finalStatus: ValidationStatus) extends ControllerCommand
+  case class EndScenario(session: Session, startTime: Date, endTime: Date, finalStatus: ValidationStatus) extends ControllerCommand
 
   case object ShutdownCmd extends ControllerCommand
 

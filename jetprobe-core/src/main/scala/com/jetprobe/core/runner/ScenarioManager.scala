@@ -8,7 +8,7 @@ import com.jetprobe.core.action._
 import com.jetprobe.core.controller.ControllerCommand.EndScenario
 import com.jetprobe.core.runner.ScenarioManager._
 import com.jetprobe.core.session.Session
-import com.jetprobe.core.structure.{ExecutableScenario, Scenario}
+import com.jetprobe.core.structure.{ExecutablePipeline, Scenario}
 import com.jetprobe.core.validations.{Failed, Passed, Skipped}
 
 import scala.collection.mutable
@@ -18,16 +18,16 @@ import scala.concurrent.duration.FiniteDuration
 /**
   * @author Shad.
   */
-class ScenarioManager(runnableScn: ExecutableScenario, controller: ActorRef) extends BaseActor {
+class ScenarioManager(runnableScn: ExecutablePipeline, controller: ActorRef) extends BaseActor {
 
-  var startTime: Long = 0L
+  var startTime: Date = new Date()
   var session: Session = _
   val metricsReport : ArrayBuffer[ActionMetrics] = ArrayBuffer.empty
 
   override def receive: Receive = {
 
     case StartScenario =>
-      startTime = new Date().getTime
+      startTime = new Date()
       val scn = runnableScn.build(context.system, new Exit(self), self)
       session = Session(scn.name, scn.className, attributes = scn.configAttr)
       scn.entry.execute(session)
@@ -53,9 +53,8 @@ class ScenarioManager(runnableScn: ExecutableScenario, controller: ActorRef) ext
       metricsReport.foreach{report =>
         println(s"Action : ${report.name}, time taken : ${(report.endTime - report.startTime)/1000f} secs")
       }
-      val timeTaken = (new Date().getTime - startTime) / 1000f
 
-      controller ! EndScenario(finalSession, timeTaken, status)
+      controller ! EndScenario(finalSession, startTime ,new Date(), status)
 
 
     case ExecuteWithDelay(next, delay) =>
@@ -79,6 +78,6 @@ object ScenarioManager {
   case class ScenarioCompleted(session: Session)
 
 
-  def props(scn: ExecutableScenario, controller: ActorRef): Props = Props(new ScenarioManager(scn, controller))
+  def props(scn: ExecutablePipeline, controller: ActorRef): Props = Props(new ScenarioManager(scn, controller))
 
 }

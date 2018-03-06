@@ -1,7 +1,7 @@
 package com.jetprobe.core.action.builder
 
 import com.jetprobe.core.action.{Action, Pause}
-import com.jetprobe.core.structure.ScenarioContext
+import com.jetprobe.core.structure.PipelineContext
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -14,5 +14,5 @@ class PauseActionBuilder(duration : FiniteDuration) extends ActionBuilder{
     * @param next the action that will be chained with the Action build by this builder
     * @return the resulting action
     */
-  override def build(ctx: ScenarioContext, next: Action): Action = new Pause(duration,next,ctx.system, ctx.controller)
+  override def build(ctx: PipelineContext, next: Action): Action = new Pause(duration,next,ctx.system, ctx.controller)
 }

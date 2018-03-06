@@ -10,10 +10,10 @@ import java.util
 import java.util.zip.ZipInputStream
 
 import akka.actor.ActorSystem
-import com.jetprobe.core.TestScenario
+import com.jetprobe.core.TestPipeline
 import com.jetprobe.core.annotation.TestSuite
 import com.jetprobe.core.common.{ConfigReader, DefaultConfigs}
-import com.jetprobe.core.structure.{ExecutableScenario, ScenarioBuilder}
+import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.ArrayBuffer
@@ -77,7 +77,7 @@ object TestRunner extends LazyLogging {
 
     implicit val system = ActorSystem("Jetprobe-system")
     val runner = Runner()
-    val scenarios = ArrayBuffer.empty[ExecutableScenario]
+    val scenarios = ArrayBuffer.empty[ExecutablePipeline]
 
     classNames.asScala.foreach(csName => {
       val testBuilder = classLoader.loadClass(csName)
@@ -85,10 +85,10 @@ object TestRunner extends LazyLogging {
       if (testBuilder.isAnnotationPresent(classOf[TestSuite]) && !isAbstract) {
         val t = testBuilder.newInstance()
 
-        if (t.isInstanceOf[TestScenario]) {
+        if (t.isInstanceOf[TestPipeline]) {
           val m = testBuilder.getDeclaredMethod("actions")
           m.setAccessible(true)
-          val result = m.invoke(t).asInstanceOf[ScenarioBuilder]
+          val result = m.invoke(t).asInstanceOf[PipelineBuilder]
           val scn = result.build()
 
           val defaultConf: Map[String, Any] = Map(DefaultConfigs.htmlReportAttr -> reportPath) ++ DefaultConfigs.staticResourceConfig(appHome)

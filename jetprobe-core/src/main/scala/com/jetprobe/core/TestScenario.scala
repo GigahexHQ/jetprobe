@@ -3,7 +3,7 @@ package com.jetprobe.core
 
 import java.util.function.Consumer
 
-import com.jetprobe.core.structure.{ExecutableScenario, ScenarioBuilder}
+import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.jetprobe.core.validations.{Passed, ValidationResult}
 import org.json4s.DefaultFormats
 
@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-trait TestScenario extends CoreDsl{
+trait TestPipeline extends CoreDsl{
 
   implicit val formats = DefaultFormats
 
@@ -20,7 +20,7 @@ trait TestScenario extends CoreDsl{
     * Define the list of action that needs to be executed as part of the test suite
     * @return The Scenario consisting of list of actions
     */
-  def actions : ScenarioBuilder
+  def actions : PipelineBuilder
 
   def assertEquals[T](expected : T,actual : => sourcecode.Text[T])(implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationResult = {
     val returnedVal = Try(actual.value)
@@ -42,3 +42,5 @@ trait TestScenario extends CoreDsl{
   }
 
 }
+
+abstract class JTestPipeline extends TestPipeline

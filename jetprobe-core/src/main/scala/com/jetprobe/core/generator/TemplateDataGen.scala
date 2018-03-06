@@ -6,7 +6,7 @@ import java.util.UUID
 import com.github.tototoshi.csv.CSVReader
 import com.jetprobe.core.Predef.Session
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
-import com.jetprobe.core.structure.ScenarioContext
+import com.jetprobe.core.structure.PipelineContext
 import com.jetprobe.core.util.FileReader
 
 import scala.util.Random
@@ -15,12 +15,13 @@ import scala.util.matching.Regex
 /**
   * @author Shad.
   */
-class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends DataGenerator {
+class TemplateDataGen(template: String, datasetPath: String, rows: Int ,indexed : Boolean = false) extends DataGenerator {
 
   lazy val gen = """\$\{([a-zA-Z])\w+\.?([a-zA-Z])\w+\}""".r
   val startPattern = "${"
   val endPattern = "}"
 
+  var indx = 0
   var sequenceN = 0
 
   private[this] def getField(str: String): String = str.substring(2).takeWhile(ch => ch != '}')
@@ -39,7 +40,9 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends 
 
         def next: String = {
           var temp = templateStr
-          val randomVal = dataset(Random.nextInt(datasetSize))
+          val randomVal = if(indexed) dataset(getNextIndx)
+          else
+          dataset(Random.nextInt(datasetSize))
 
           regexMatches.toSet.foreach {
             str: String =>
@@ -72,7 +75,11 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int) extends 
 
     case _ => dataset(pattern).trim
 
+  }
 
+  def getNextIndx : Int = {
+    indx = indx + 1
+    indx
   }
 
 
