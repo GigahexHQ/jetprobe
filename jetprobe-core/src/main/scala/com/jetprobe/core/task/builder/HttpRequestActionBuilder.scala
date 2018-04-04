@@ -1,7 +1,7 @@
-package com.jetprobe.core.action.builder
+package com.jetprobe.core.task.builder
 
-import com.jetprobe.core.action.HttpRequestAction.{HttpRequestMessage, handleHttpRequests, parseHttpRequest}
-import com.jetprobe.core.action._
+import com.jetprobe.core.task.HttpRequestTask.{HttpRequestMessage, handleHttpRequests, parseHttpRequest}
+import com.jetprobe.core.task._
 import com.jetprobe.core.http.HttpRequestBuilder
 import com.jetprobe.core.session.Session
 import com.jetprobe.core.structure.PipelineContext
@@ -11,19 +11,19 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class HttpRequestActionBuilder(requestBuilder : HttpRequestBuilder) extends ActionBuilder {
+class HttpRequestTaskBuilder(requestBuilder : HttpRequestBuilder) extends TaskBuilder {
 
-  val name : String = s"HttpAction-${requestBuilder.requestName.replaceAll(" ","_")}"
+  val name : String = s"HttpTask-${requestBuilder.requestName.replaceAll(" ","_")}"
   /**
     * @param ctx  the test context
-    * @param next the action that will be chained with the Action build by this builder
-    * @return the resulting action
+    * @param next the task that will be chained with the Task build by this builder
+    * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Action): Action = {
-    new SelfExecutableAction(name,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
+  override def build(ctx: PipelineContext, next: Task): Task = {
+    new SelfExecutableTask(name,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
   }
 
-  def handleHttp(actionMessage: ActionMessage, session: Session): Session = actionMessage match {
+  def handleHttp(taskMessage: TaskMessage, session: Session): Session = taskMessage match {
     case HttpRequestMessage(reqBuilder) =>
       val parsedReq = parseHttpRequest(reqBuilder, session.attributes)
 
@@ -57,7 +57,7 @@ class HttpRequestActionBuilder(requestBuilder : HttpRequestBuilder) extends Acti
           }
 
         case None =>
-          logger.error(s"Failed parsing of the request : [${reqBuilder.requestName}]. The Http Action would be skipped.")
+          logger.error(s"Failed parsing of the request : [${reqBuilder.requestName}]. The Http Task would be skipped.")
           session
       }
   }

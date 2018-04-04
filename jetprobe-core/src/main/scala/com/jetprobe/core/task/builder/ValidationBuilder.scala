@@ -1,7 +1,7 @@
-package com.jetprobe.core.action.builder
+package com.jetprobe.core.task.builder
 
 import com.jetprobe.core.Predef.Session
-import com.jetprobe.core.action._
+import com.jetprobe.core.task._
 import com.jetprobe.core.storage.Storage
 import com.jetprobe.core.structure.{Config, PipelineContext}
 import com.jetprobe.core.validations.{ValidationResult, ValidationRule}
@@ -11,20 +11,20 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class ValidationBuilder[S <: Storage](storeConfig: Config[S], rulesBuilder: S => ValidationRule[S]) extends ActionBuilder {
+class ValidationBuilder[S <: Storage](storeConfig: Config[S], rulesBuilder: S => ValidationRule[S]) extends TaskBuilder {
 
-  val name: String = "ValidationAction"
+  val name: String = "ValidationTask"
 
   /**
     * @param ctx  the test context
-    * @param next the action that will be chained with the Action build by this builder
-    * @return the resulting action
+    * @param next the task that will be chained with the Task build by this builder
+    * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Action): Action = {
-    new SelfExecutableAction(name, ValidationMessage(storeConfig, rulesBuilder, name), next, ctx.system, ctx.controller)(runValidator)
+  override def build(ctx: PipelineContext, next: Task): Task = {
+    new SelfExecutableTask(name, ValidationMessage(storeConfig, rulesBuilder, name), next, ctx.system, ctx.controller)(runValidator)
   }
 
-  private[this] def runValidator(message: ActionMessage, session: Session): Session = {
+  private[this] def runValidator(message: TaskMessage, session: Session): Session = {
 
     message match {
       case msg: ValidationMessage[S] =>
@@ -37,7 +37,7 @@ class ValidationBuilder[S <: Storage](storeConfig: Config[S], rulesBuilder: S =>
 }
 
 
-case class ValidationMessage[S <: Storage](storeConfig: Config[S], rulesBuilder: S => ValidationRule[S], name: String) extends ActionMessage {
+case class ValidationMessage[S <: Storage](storeConfig: Config[S], rulesBuilder: S => ValidationRule[S], name: String) extends TaskMessage {
 
   def getRule(config: Map[String, Any]): ValidationRule[S] = {
     val storage = storeConfig.getStorage(config)
@@ -46,17 +46,17 @@ case class ValidationMessage[S <: Storage](storeConfig: Config[S], rulesBuilder:
 
 }
 
-class RegisterValidation[S <: Storage](storeConfig: Config[S], description: String, fnTest: S => Any) extends ActionBuilder {
+class RegisterValidation[S <: Storage](storeConfig: Config[S], description: String, fnTest: S => Any) extends TaskBuilder {
 
-  override def build(ctx: PipelineContext, next: Action): Action = {
+  override def build(ctx: PipelineContext, next: Task): Task = {
 
     val message = ValidateStorage(storeConfig, fnTest, description)
 
-    new SelfExecutableAction(description.replaceAll(" ", "-"), message, next, ctx.system, ctx.controller)(runValidator)
+    new SelfExecutableTask(description.replaceAll(" ", "-"), message, next, ctx.system, ctx.controller)(runValidator)
 
   }
 
-  private[this] def runValidator(message: ActionMessage, session: Session): Session = {
+  private[this] def runValidator(message: TaskMessage, session: Session): Session = {
 
     message match {
       case msg: ValidateStorage[S] =>
@@ -79,20 +79,20 @@ class RegisterValidation[S <: Storage](storeConfig: Config[S], description: Stri
   }
 
 
-  case class ValidateStorage[S <: Storage](storeConfig: Config[S], fnTest: S => Any, name: String) extends ActionMessage
+  case class ValidateStorage[S <: Storage](storeConfig: Config[S], fnTest: S => Any, name: String) extends TaskMessage
 
 
 }
 
-class PropertyValidation[D](val property: D, val fn: D => Any) extends ActionBuilder {
+class PropertyValidation[D](val property: D, val fn: D => Any) extends TaskBuilder {
 
   val name: String = getClass.getSimpleName
 
-  override def build(ctx: PipelineContext, next: Action): Action = {
-    new SelfExecutableAction(name, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
+  override def build(ctx: PipelineContext, next: Task): Task = {
+    new SelfExecutableTask(name, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
   }
 
-  private[this] def runValidation(message: ActionMessage, session: Session): Session = message match {
+  private[this] def runValidation(message: TaskMessage, session: Session): Session = message match {
     case ValidationRequest(request) =>
       val tryResult = Try(request.fn.apply(request.property))
       tryResult match {
@@ -103,7 +103,7 @@ class PropertyValidation[D](val property: D, val fn: D => Any) extends ActionBui
 
 }
 
-case class ValidationRequest[D](request: PropertyValidation[D]) extends ActionMessage {
+case class ValidationRequest[D](request: PropertyValidation[D]) extends TaskMessage {
 
   override def name: String = request.name
 }

@@ -1,4 +1,4 @@
-package com.jetprobe.core.action
+package com.jetprobe.core.task
 
 import java.util.Date
 import akka.actor.ActorRef
@@ -9,9 +9,9 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-abstract class ActionActor extends BaseActor {
+abstract class TaskActor extends BaseActor {
 
-  def next: Action
+  def next: Task
 
   override def receive: Receive = {
 
@@ -20,10 +20,10 @@ abstract class ActionActor extends BaseActor {
       context stop self
   }
 
-  def execute(actionMessage: ActionMessage,session: Session) : Unit
+  def execute(taskMessage: TaskMessage,session: Session) : Unit
 
   /**
-    * Makes sure that in case of an actor crash, the Session is not lost but passed to the next Action.
+    * Makes sure that in case of an actor crash, the Session is not lost but passed to the next Task.
     */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit =
     message.foreach {
@@ -37,7 +37,7 @@ abstract class ActionActor extends BaseActor {
     }
 }
 
-abstract class ActionBackedActor(next : Action,controller : ActorRef) extends BaseActor {
+abstract class TaskBackedActor(next : Task,controller : ActorRef) extends BaseActor {
 
   override def receive: Receive = {
 
@@ -49,11 +49,11 @@ abstract class ActionBackedActor(next : Action,controller : ActorRef) extends Ba
         execute(message,session)
       } match {
         case Success(sess) =>
-          val metrics = new ActionMetrics(message.name,startTime,new Date().getTime,Failed)
+          val metrics = new TaskMetrics(message.name,startTime,new Date().getTime,Failed)
           controller ! ExecuteNext(next,sess,false,metrics)
         case Failure(ex) =>
           logger.error(ex.getMessage)
-          val metrics = new ActionMetrics(message.name,startTime,new Date().getTime,Failed)
+          val metrics = new TaskMetrics(message.name,startTime,new Date().getTime,Failed)
           controller ! ExecuteNext(next,session,false,metrics)
       }
 
@@ -61,14 +61,14 @@ abstract class ActionBackedActor(next : Action,controller : ActorRef) extends Ba
 
 
     case _ =>
-      logger.error(s"Unsupported message for action ${next.name}")
+      logger.error(s"Unsupported message for task ${next.name}")
   }
 
-  def execute(actionMessage: ActionMessage,session: Session) : Session
+  def execute(taskMessage: TaskMessage,session: Session) : Session
 
 
   /**
-    * Makes sure that in case of an actor crash, the Session is not lost but passed to the next Action.
+    * Makes sure that in case of an actor crash, the Session is not lost but passed to the next Task.
     */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit =
     message.foreach {
@@ -82,8 +82,8 @@ abstract class ActionBackedActor(next : Action,controller : ActorRef) extends Ba
     }
 }
 
-class ActionMetrics(val name : String, val startTime : Long, val endTime : Long, state : ActionState)
+class TaskMetrics(val name : String, val startTime : Long, val endTime : Long, state : TaskState)
 
-trait ActionState
-case object Successful extends ActionState
-case object Failed extends ActionState
+trait TaskState
+case object Successful extends TaskState
+case object Failed extends TaskState

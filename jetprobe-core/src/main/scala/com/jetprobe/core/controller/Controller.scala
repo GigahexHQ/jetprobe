@@ -4,7 +4,7 @@ import java.util.Date
 
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.actor.{ActorSystem, OneForOneStrategy, PoisonPill, Props}
-import com.jetprobe.core.action.BaseActor
+import com.jetprobe.core.task.BaseActor
 import com.jetprobe.core.common.DefaultConfigs
 import com.jetprobe.core.controller.ControllerCommand.{EndScenario, ScheduleTestSuites, ShutdownCmd, Start}
 import com.jetprobe.core.reporter.extent.ExtentReporter

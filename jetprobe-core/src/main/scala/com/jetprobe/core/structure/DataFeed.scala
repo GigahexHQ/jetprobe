@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.builder.{ActionBuilder, IngestionBuilder, StorageIOBuilder}
+import com.jetprobe.core.task.builder.{TaskBuilder, IngestionBuilder, StorageIOBuilder}
 import com.jetprobe.core.generator.DataGenerator
 import com.jetprobe.core.storage.Storage
 

@@ -21,7 +21,7 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int ,indexed 
   val startPattern = "${"
   val endPattern = "}"
 
-  var indx = 0
+  var indx = -1
   var sequenceN = 0
 
   private[this] def getField(str: String): String = str.substring(2).takeWhile(ch => ch != '}')
@@ -37,6 +37,7 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int ,indexed 
         val reader = CSVReader.open(new File(mapped(datasetPath)))
         val dataset = reader.allWithHeaders().toArray
         val datasetSize = dataset.length
+        val dataCount = if(rows <= 0 ) datasetSize else rows
 
         def next: String = {
           var temp = templateStr
@@ -59,7 +60,7 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int ,indexed 
           temp
         }
 
-        Some(Iterator.fill[String](rows)(next))
+        Some(Iterator.fill[String](dataCount)(next + "\n"))
 
       case Left(exception) => None
     }

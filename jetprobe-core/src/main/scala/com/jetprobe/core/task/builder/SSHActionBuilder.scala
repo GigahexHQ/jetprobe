@@ -1,10 +1,10 @@
-package com.jetprobe.core.action.builder
+package com.jetprobe.core.task.builder
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.util.Scanner
 
 import akka.actor.ActorSystem
-import com.jetprobe.core.action._
+import com.jetprobe.core.task._
 import com.jetprobe.core.structure.PipelineContext
 import com.typesafe.scalalogging.LazyLogging
 import net.schmizz.sshj.SSHClient
@@ -16,31 +16,32 @@ import net.schmizz.sshj.xfer.FileSystemFile
 /**
   * @author Shad.
   */
-class SSHActionBuilder(fnShellAction: SecuredClient => Unit, sSHConfig: SSHConfig) extends ActionBuilder with LazyLogging {
+class SSHTaskBuilder(fnShellTask: SecuredClient => Unit, sSHConfig: SSHConfig) extends TaskBuilder with LazyLogging {
 
-  private val name = "Secured-Shell-Action"
+  private val name = "Secured-Shell-Task"
 
   /**
     * @param ctx  the test context
-    * @param next the action that will be chained with the Action build by this builder
-    * @return the resulting action
+    * @param next the task that will be chained with the Task build by this builder
+    * @return the resulting task
     */
 
-  override def build(ctx: PipelineContext, next: Action): Action = {
-    val sshMessage = SSHMessage(fnShellAction, sSHConfig, next)
+  override def build(ctx: PipelineContext, next: Task): Task = {
+    val sshMessage = SSHMessage(fnShellTask, sSHConfig, next)
 
 
-    new SelfExecutableAction(name, sshMessage, next, ctx.system, ctx.controller)({
+    new SelfExecutableTask(name, sshMessage, next, ctx.system, ctx.controller)({
       case (message, sess) => message match {
-        case SSHMessage(fnAction, config, next) =>
+        case SSHMessage(fnTask, config, next) =>
 
           val sshClient = new SSHClient()
           sshClient.addHostKeyVerifier(new PromiscuousVerifier)
+          sshClient.loadKnownHosts()
           sshClient.connect(config.hostName)
           sshClient.setConnectTimeout(5)
           sshClient.authPassword(config.user, config.password)
           try {
-            fnAction(new SecuredClient(sshClient,ctx.system))
+            fnTask(new SecuredClient(sshClient,ctx.system))
           } finally sshClient.disconnect
 
           //return the same session
@@ -54,9 +55,9 @@ class SSHActionBuilder(fnShellAction: SecuredClient => Unit, sSHConfig: SSHConfi
 
 }
 
-case class SSHMessage(fnShellAction: SecuredClient => Unit, sshConfig: SSHConfig, next: Action) extends ActionMessage {
+case class SSHMessage(fnShellTask: SecuredClient => Unit, sshConfig: SSHConfig, next: Task) extends TaskMessage {
 
-  override def name: String = s"SSH Actions at host : ${sshConfig.hostName}"
+  override def name: String = s"SSH Tasks at host : ${sshConfig.hostName}"
 }
 
 class SecuredClient(ssh: SSHClient,actorSystem: ActorSystem) extends LazyLogging {
@@ -66,7 +67,8 @@ class SecuredClient(ssh: SSHClient,actorSystem: ActorSystem) extends LazyLogging
 
     val session = ssh.startSession
     try {
-      val run = session.exec(cmd.replaceAll("\r", "").replaceAll("\n", " "))
+      val strippedCmdStr = cmd.replaceAll("\r", "").replaceAll("\n", " ")
+      val run = session.exec(strippedCmdStr)
 
       val errorStream = new StreamLog(run.getErrorStream)
       val infoStream = new StreamLog(run.getInputStream)

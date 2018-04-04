@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.builder.PauseActionBuilder
+import com.jetprobe.core.task.builder.PauseTaskBuilder
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -9,6 +9,6 @@ import scala.concurrent.duration.FiniteDuration
   */
 trait Pauses[B] extends Execs[B]{
 
-  def pause(duration : FiniteDuration) : B = exec(new PauseActionBuilder(duration))
+  def pause(duration : FiniteDuration) : B = exec(new PauseTaskBuilder(duration))
 
 }

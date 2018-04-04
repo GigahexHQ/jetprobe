@@ -1,6 +1,6 @@
 package com.jetprobe.core.storage
 
-import com.jetprobe.core.action.builder.ActionBuilder
+import com.jetprobe.core.task.builder.TaskBuilder
 import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.validations.ValidationRule
 import com.typesafe.scalalogging.LazyLogging

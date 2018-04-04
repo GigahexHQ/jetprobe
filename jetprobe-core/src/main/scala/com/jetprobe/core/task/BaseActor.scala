@@ -1,4 +1,4 @@
-package com.jetprobe.core.action
+package com.jetprobe.core.task
 
 import akka.actor.{Actor, Terminated}
 import com.typesafe.scalalogging.LazyLogging

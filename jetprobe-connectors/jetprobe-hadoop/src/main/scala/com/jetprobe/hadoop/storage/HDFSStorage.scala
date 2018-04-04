@@ -14,6 +14,9 @@ import org.apache.hadoop.fs.{ContentSummary, FileSystem, Path}
 
 class HDFSStorage private[jetprobe](val conf: Configuration, val hadoopUserName: String, val fs: FileSystem) extends Storage {
 
+  implicit def toPath(path : String) : Path = new Path(path)
+
+  val batch = 10000
   def getFileSystem: FileSystem = {
     init(s"/usesr/${hadoopUserName}")
     fs
@@ -29,8 +32,13 @@ class HDFSStorage private[jetprobe](val conf: Configuration, val hadoopUserName:
   def write(records: Iterator[String], at: String): Unit = {
     init(at)
     val outputStream = fs.create(new Path(at))
-    records.foreach(s => outputStream.writeBytes(s + "\n"))
+    records.grouped(batch).foreach { records =>
+      records.foreach(s => outputStream.writeBytes(s + "\n"))
+      outputStream.flush()
+    }
+    outputStream.flush()
     outputStream.close()
+    fs.close()
 
   }
 

@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.builder.{ActionBuilder, PropertyValidation, RegisterValidation, ValidationBuilder}
+import com.jetprobe.core.task.builder.{TaskBuilder, PropertyValidation, RegisterValidation, ValidationBuilder}
 import com.jetprobe.core.storage.{DataSource, Storage, StorageQuery}
 import com.jetprobe.core.validations._
 

@@ -1,7 +1,7 @@
 package com.jetprobe.core.runner
 
 import akka.actor.ActorSystem
-import com.jetprobe.core.action.Exit
+import com.jetprobe.core.task.Exit
 import com.jetprobe.core.controller.Controller
 import com.jetprobe.core.controller.ControllerCommand.{ScheduleTestSuites, Start}
 import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}

@@ -2,7 +2,7 @@ package com.jetprobe.core.structure
 
 import java.util.function.Consumer
 
-import com.jetprobe.core.action.builder.{ActionBuilder, PauseActionBuilder, RunnableActionBuilder}
+import com.jetprobe.core.task.builder.{TaskBuilder, PauseTaskBuilder, RunnableTaskBuilder}
 import com.jetprobe.core.storage.Storage
 
 import scala.concurrent.duration.FiniteDuration
@@ -12,14 +12,14 @@ import scala.concurrent.duration.FiniteDuration
   */
 trait Execs[B] {
 
-  private[core] def actionBuilders: List[ActionBuilder]
+  private[core] def taskBuilders: List[TaskBuilder]
 
-  def exec(actionBuilder: ActionBuilder): B = chain(List(actionBuilder))
-  def exec(actionBuilders: ActionBuilder*): B = chain(actionBuilders.toSeq.reverse)
+  def exec(taskBuilder: TaskBuilder): B = chain(List(taskBuilder))
+  def exec(taskBuilders: TaskBuilder*): B = chain(taskBuilders.toSeq.reverse)
 
-  def doWith[S <: Storage](config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableActionBuilder[S](config,handler)))
+  def doWith[S <: Storage](config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableTaskBuilder[S](config,handler)))
 
-   def chain(newActionBuilders: Seq[ActionBuilder]): B //= newInstance(newActionBuilders.toList ::: actionBuilders)
+   def chain(newTaskBuilders: Seq[TaskBuilder]): B //= newInstance(newTaskBuilders.toList ::: taskBuilders)
 }
 
 trait Config[S <: Storage]{

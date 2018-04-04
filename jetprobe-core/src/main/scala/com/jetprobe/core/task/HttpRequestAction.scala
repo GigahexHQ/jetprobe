@@ -1,4 +1,4 @@
-package com.jetprobe.core.action
+package com.jetprobe.core.task
 
 import java.nio.charset.StandardCharsets._
 
@@ -7,7 +7,7 @@ import com.jetprobe.core.parser.ExpressionParser
 import com.jetprobe.core.session.Session
 import org.asynchttpclient._
 import ExpressionParser._
-import HttpRequestAction._
+import HttpRequestTask._
 import akka.actor.{ActorRef, Props}
 
 import scala.util.{Failure, Success, Try}
@@ -17,14 +17,14 @@ import scala.util.{Failure, Success, Try}
   */
 
 
-object HttpRequestAction {
+object HttpRequestTask {
 
-  case class HttpRequestMessage(reqBuilder : HttpRequestBuilder) extends ActionMessage {
+  case class HttpRequestMessage(reqBuilder : HttpRequestBuilder) extends TaskMessage {
 
     override def name: String = s"Http request : ${reqBuilder.requestName}"
   }
 
-  private[action] def parseHttpRequest(rb: HttpRequestBuilder, attributes: Map[String, Any]): Option[HttpRequestBuilder] = {
+  private[task] def parseHttpRequest(rb: HttpRequestBuilder, attributes: Map[String, Any]): Option[HttpRequestBuilder] = {
 
     val uriAndHeaderParsed = parse(rb.uri, attributes).flatMap(parsedURI => {
       val modHttp = rb.copy(uri = parsedURI)

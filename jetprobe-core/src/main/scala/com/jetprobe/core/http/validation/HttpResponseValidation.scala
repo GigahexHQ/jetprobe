@@ -1,6 +1,6 @@
 package com.jetprobe.core.http.validation
 
-import com.jetprobe.core.action.HttpRequestAction
+import com.jetprobe.core.task.HttpRequestTask
 import com.jetprobe.core.extractor.JsonPathBuilder
 import com.jetprobe.core.http.{HttpRequestBuilder, HttpResponse}
 import com.jetprobe.core.parser.ExpressionParser
@@ -82,7 +82,7 @@ case class JsonResponseRule[T](httpRequestName: String = "",
   def handleHttpRequest(sink: HttpRequestBuilder, config: Map[String, Any]): Option[HttpResponse] = {
     ExpressionParser.parse(sink.uri, config) match {
       case Some(httpURI) =>
-        val response = HttpRequestAction.handleHttpRequests(sink, httpURI)
+        val response = HttpRequestTask.handleHttpRequests(sink, httpURI)
         Some(response)
       case None =>
         logger.error(s"Unable to extract request URI for variable ${sink.uri}")

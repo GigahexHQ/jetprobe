@@ -1,8 +1,8 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.action.Action
+import com.jetprobe.core.task.Task
 
 /**
   * @author Shad.
   */
-case class Scenario(name : String, entry : Action, ctx : PipelineContext, className : String, configAttr : Map[String,Any])
+case class Scenario(name : String, entry : Task, ctx : PipelineContext, className : String, configAttr : Map[String,Any])

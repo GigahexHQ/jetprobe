@@ -169,9 +169,9 @@ object HtmlReportWriter {
     val failedFrac = "%.2f".format(report.failedCount / totalTests)
     val skippedFrac = "%.2f".format(report.skippedCount / totalTests)
 
-    def singleStat(testSuite: String, status: String, fraction: String, count: Int): TypedTag[String] = {
+    def singleStat(testSuite: String, status: String, frtask: String, count: Int): TypedTag[String] = {
       div(cls := "col s4 center-align hidden")(
-        div(cls := "stats-container", data.status := status, data.fraction := fraction,
+        div(cls := "stats-container", data.status := status, data.frtask := frtask,
           attr("data-suite-parent") := shortenedName,
           attr("data-stat") := s"${count}")
       )

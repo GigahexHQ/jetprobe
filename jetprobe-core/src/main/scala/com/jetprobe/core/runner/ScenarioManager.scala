@@ -4,7 +4,7 @@ import java.util.Date
 
 import akka.actor.{ActorRef, PoisonPill, Props}
 import com.jetprobe.core.Predef.Session
-import com.jetprobe.core.action._
+import com.jetprobe.core.task._
 import com.jetprobe.core.controller.ControllerCommand.EndScenario
 import com.jetprobe.core.runner.ScenarioManager._
 import com.jetprobe.core.session.Session
@@ -22,7 +22,7 @@ class ScenarioManager(runnableScn: ExecutablePipeline, controller: ActorRef) ext
 
   var startTime: Date = new Date()
   var session: Session = _
-  val metricsReport : ArrayBuffer[ActionMetrics] = ArrayBuffer.empty
+  val metricsReport : ArrayBuffer[TaskMetrics] = ArrayBuffer.empty
 
   override def receive: Receive = {
 
@@ -32,16 +32,16 @@ class ScenarioManager(runnableScn: ExecutablePipeline, controller: ActorRef) ext
       session = Session(scn.name, scn.className, attributes = scn.configAttr)
       scn.entry.execute(session)
 
-    case ActionCompleted(newSession) =>
+    case TaskCompleted(newSession) =>
       session = newSession
       context stop (sender())
 
-    case ExecuteNext(action, newSession, isScheduled,metrics) =>
+    case ExecuteNext(task, newSession, isScheduled,metrics) =>
       if (!isScheduled) {
         context stop (sender())
       }
       metricsReport.+=(metrics)
-      action.execute(newSession)
+      task.execute(newSession)
 
     case ScenarioCompleted(finalSession) =>
       val status = if (finalSession.validationResults.count(_.status == Passed) == finalSession.validationResults.size) {
@@ -51,7 +51,7 @@ class ScenarioManager(runnableScn: ExecutablePipeline, controller: ActorRef) ext
       } else Failed
 
       metricsReport.foreach{report =>
-        println(s"Action : ${report.name}, time taken : ${(report.endTime - report.startTime)/1000f} secs")
+        println(s"Task : ${report.name}, time taken : ${(report.endTime - report.startTime)/1000f} secs")
       }
 
       controller ! EndScenario(finalSession, startTime ,new Date(), status)
@@ -60,7 +60,7 @@ class ScenarioManager(runnableScn: ExecutablePipeline, controller: ActorRef) ext
     case ExecuteWithDelay(next, delay) =>
       logger.info(s"Pausing the pipeline for the duration : ${delay.length}")
       val startTime = new Date().getTime
-      val metrics = new ActionMetrics(s"paused for ${delay.length}ms", startTime, startTime + delay.length, Successful)
+      val metrics = new TaskMetrics(s"paused for ${delay.length}ms", startTime, startTime + delay.length, Successful)
       context.system.scheduler.scheduleOnce(delay, self, ExecuteNext(next, session, true, metrics))
   }
 }
@@ -69,11 +69,11 @@ object ScenarioManager {
 
   case class StartScenario()
 
-  case class ActionCompleted(session: Session)
+  case class TaskCompleted(session: Session)
 
-  case class ExecuteNext(next: Action, session: Session, scheduledAction: Boolean, metrics: ActionMetrics)
+  case class ExecuteNext(next: Task, session: Session, scheduledTask: Boolean, metrics: TaskMetrics)
 
-  case class ExecuteWithDelay(next: Action, duration: FiniteDuration)
+  case class ExecuteWithDelay(next: Task, duration: FiniteDuration)
 
   case class ScenarioCompleted(session: Session)
 

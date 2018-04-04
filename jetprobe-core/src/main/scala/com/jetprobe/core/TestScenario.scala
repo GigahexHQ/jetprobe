@@ -17,10 +17,10 @@ trait TestPipeline extends CoreDsl{
   implicit val formats = DefaultFormats
 
   /**
-    * Define the list of action that needs to be executed as part of the test suite
-    * @return The Scenario consisting of list of actions
+    * Define the list of task that needs to be executed as part of the test suite
+    * @return The Scenario consisting of list of tasks
     */
-  def actions : PipelineBuilder
+  def tasks : PipelineBuilder
 
   def assertEquals[T](expected : T,actual : => sourcecode.Text[T])(implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationResult = {
     val returnedVal = Try(actual.value)

@@ -59,7 +59,7 @@ case class MongoStorage private[jetprobe](uri: String, conf: Map[String, Any])
   def getDatabaseStats(db : String) : Option[Document] = {
     usingDatabase(db) {d =>
       val futureResult = getResult(d,dbStatsCommand)
-      Await.result(futureResult,10.seconds)
+      Await.result(futureResult,100.seconds)
     }
   }
 
@@ -115,7 +115,7 @@ case class MongoStorage private[jetprobe](uri: String, conf: Map[String, Any])
   }
 
   /**
-    * Utility func to support collection based actions
+    * Utility func to support collection based tasks
     *
     * @param db
     * @param collectionName
@@ -135,7 +135,7 @@ case class MongoStorage private[jetprobe](uri: String, conf: Map[String, Any])
   }
 
   /**
-    * Utility func to support client based IO actions
+    * Utility func to support client based IO tasks
     *
     * @param fn Client handler function
     * @tparam T return type

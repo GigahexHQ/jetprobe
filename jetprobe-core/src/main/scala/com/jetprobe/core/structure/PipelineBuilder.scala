@@ -1,26 +1,26 @@
 package com.jetprobe.core.structure
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.jetprobe.core.action.Action
-import com.jetprobe.core.action.builder.ActionBuilder
+import com.jetprobe.core.task.Task
+import com.jetprobe.core.task.builder.TaskBuilder
 
 /**
   * @author Shad.
   */
 case class PipelineBuilder(name: String,
                            cls: String,
-                           actionBuilders: List[ActionBuilder] = List.empty) {
+                           taskBuilders: List[TaskBuilder] = List.empty) {
 
-  private[core] def newInstance(actionBuilders: List[ActionBuilder]) =
-    copy(actionBuilders = actionBuilders)
+  private[core] def newInstance(taskBuilders: List[TaskBuilder]) =
+    copy(taskBuilders = taskBuilders)
 
 
   def build(): ExecutablePipeline = ExecutablePipeline(this, this.cls)
 
   private[jetprobe] def build(ctx: PipelineContext,
-                              chainNext: Action): Action = {
-    actionBuilders.foldLeft(chainNext) { (next, actionBuilder) =>
-      actionBuilder.build(ctx, next)
+                              chainNext: Task): Task = {
+    taskBuilders.foldLeft(chainNext) { (next, taskBuilder) =>
+      taskBuilder.build(ctx, next)
     }
   }
 
@@ -29,7 +29,7 @@ case class PipelineBuilder(name: String,
 case class ExecutablePipeline(PipelineBuilder: PipelineBuilder, className: String, config: Map[String, Any] = Map.empty) {
 
   def build(system: ActorSystem,
-            onExit: Action,
+            onExit: Task,
             controller: ActorRef): Scenario = {
     val ctx = PipelineContext(system, controller)
     val entry = PipelineBuilder.build(ctx, onExit)

@@ -1,4 +1,4 @@
-package com.jetprobe.core.action
+package com.jetprobe.core.task
 
 import java.util.Date
 
@@ -9,7 +9,7 @@ import com.jetprobe.core.session.{Session, UserMessage}
 /**
   * @author Shad.
   */
-class Exit(controller: ActorRef) extends Action {
+class Exit(controller: ActorRef) extends Task {
 
   override def name: String = "jetprobe-exit"
   override def execute(session: Session): Unit = {

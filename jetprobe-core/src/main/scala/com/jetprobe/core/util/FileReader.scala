@@ -45,7 +45,7 @@ object FileReader {
       dataset += data
     }
     bs.close
-    dataset.mkString("")
+    dataset.mkString("").split('\n').map(_.trim.filter(_ >= ' ')).mkString
 
   }
 

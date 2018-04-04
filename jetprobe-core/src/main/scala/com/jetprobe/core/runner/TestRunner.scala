@@ -86,7 +86,7 @@ object TestRunner extends LazyLogging {
         val t = testBuilder.newInstance()
 
         if (t.isInstanceOf[TestPipeline]) {
-          val m = testBuilder.getDeclaredMethod("actions")
+          val m = testBuilder.getDeclaredMethod("tasks")
           m.setAccessible(true)
           val result = m.invoke(t).asInstanceOf[PipelineBuilder]
           val scn = result.build()
