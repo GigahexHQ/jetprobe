@@ -1,7 +1,7 @@
 package com.jetprobe.core
 
-import com.jetprobe.core.task.builder.{TaskBuilder, RunnableTaskBuilder}
-import com.jetprobe.core.annotation.TestSuite
+import com.jetprobe.core.task.builder.{RunnableTaskBuilder, TaskBuilder}
+import com.jetprobe.core.annotation.PipelineMeta
 import com.jetprobe.core.http.{HttpDSL, HttpSupport}
 import com.jetprobe.core.structure._
 
@@ -19,7 +19,7 @@ trait CoreDsl
 
   var scn: PipelineBuilder = {
     val cls = getClass
-    val annotation = cls.getAnnotation(classOf[TestSuite])
+    val annotation = cls.getAnnotation(classOf[PipelineMeta])
     annotation match {
       case ann if (ann != null) => PipelineBuilder(ann.name(), cls.getName)
       case _ => PipelineBuilder(cls.getName, cls.getName)

@@ -9,7 +9,7 @@ import com.jetprobe.core.common.DefaultConfigs
 import com.jetprobe.core.controller.ControllerCommand.{EndScenario, ScheduleTestSuites, ShutdownCmd, Start}
 import com.jetprobe.core.reporter.extent.ExtentReporter
 import com.jetprobe.core.reporter.{ConsoleReportWriter, HtmlReportWriter, ValidationReport}
-import com.jetprobe.core.runner.ScenarioManager
+import com.jetprobe.core.runner.PipelineManager
 import com.jetprobe.core.session.{Session, UserMessage}
 import com.jetprobe.core.structure.{ExecutablePipeline, Scenario}
 import com.jetprobe.core.validations.{Failed, Passed, Skipped, ValidationStatus}
@@ -107,8 +107,8 @@ class Controller(hasReport: Boolean) extends BaseActor with LazyLogging {
       total = scns.size
       logger.info(s"Total number of test suites : ${scns.length}")
       scns.foreach { scn =>
-        val scheduler = context.system.actorOf(ScenarioManager.props(scn, self))
-        scheduler ! ScenarioManager.StartScenario
+        val scheduler = context.system.actorOf(PipelineManager.props(scn, self))
+        scheduler ! PipelineManager.StartPipelineExecution
 
       }
 

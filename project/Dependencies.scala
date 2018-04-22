@@ -22,6 +22,8 @@ object Dependencies {
   private val circeCore = "io.circe" %% "circe-core" % "0.8.0"
   private val circeGeneric = "io.circe" %% "circe-generic" % circeCore.revision
   private val circeParser = "io.circe" %% "circe-parser" % circeCore.revision
+  private val circeExtras = "io.circe" %% "circe-generic-extras" % circeCore.revision
+  private val circeYaml = "io.circe" %% "circe-yaml" % "0.6.1"
   private val sourceCode = "com.lihaoyi" %% "sourcecode" % "0.1.4"
   private val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
   private val scalatags = "com.lihaoyi" %% "scalatags" % "0.6.7"
@@ -126,7 +128,9 @@ object Dependencies {
     ahcNettyUtils,
     jsonPath,
     circeCore,
+    circeYaml,
     circeParser,
+    circeExtras,
     circeGeneric,
     junit,
     extentReport

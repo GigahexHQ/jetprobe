@@ -3,15 +3,17 @@ package com.jetprobe.core.task.builder
 import java.io.File
 
 import com.jetprobe.core.Predef.Session
-import com.jetprobe.core.task.{Task, TaskMessage, SelfExecutableTask}
+import com.jetprobe.core.task._
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
 import com.jetprobe.core.structure.PipelineContext
 
 /**
   * @author Shad.
   */
-class RunCommandBuilder(command: String, at: String) extends TaskBuilder {
-  private val name = "Secured-Shell-Task"
+case object LocalCommandTask extends TaskType
+
+class RunCommandBuilder(val description : String,command: String, at: String) extends TaskBuilder {
+  private val name = "Local Command Task"
   private val windowsCmd = "cmd /C "
 
   /**
@@ -21,7 +23,8 @@ class RunCommandBuilder(command: String, at: String) extends TaskBuilder {
     */
   override def build(ctx: PipelineContext, next: Task): Task = {
     val message = RunCommandMessage(command, at)
-    new SelfExecutableTask(name, message, next, ctx.system, ctx.controller)(handleMessage)
+    val taskMeta = TaskMeta(description,LocalCommandTask)
+    new SelfExecutableTask(taskMeta, message, next, ctx.system, ctx.controller)(handleMessage)
   }
 
   import sys.process._

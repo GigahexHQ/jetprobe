@@ -1,0 +1,20 @@
+name : TestScenario
+project : Awesomeness
+tags :
+  - fast
+  - test
+
+# params for the scenario
+params :
+  vm.host : 10.75.140.166
+  vm.username : shad
+  vm.password : admin
+  hdfs.namenode : hdfs://localhost
+  hdfs.loginAs : shad
+
+
+pipelines :
+  - name : Testing pipe
+    className : com.jetprobe.sample.TestPipeline
+    description : Run the Match pipeline on Spark
+    exitOnFailure : true

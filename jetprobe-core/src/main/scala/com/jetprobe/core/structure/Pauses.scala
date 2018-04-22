@@ -9,6 +9,6 @@ import scala.concurrent.duration.FiniteDuration
   */
 trait Pauses[B] extends Execs[B]{
 
-  def pause(duration : FiniteDuration) : B = exec(new PauseTaskBuilder(duration))
+  def pause(description : String, duration : FiniteDuration) : B = exec(new PauseTaskBuilder(description,duration))
 
 }

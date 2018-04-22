@@ -16,7 +16,7 @@ object LiteralExtractor {
     Some(implicitly[ParseOp[T]].op(s))
   }
   catch {
-    case _ => None
+    case _ : Throwable=> None
   }
 
 

@@ -16,7 +16,7 @@ class HttpTaskSpec extends FlatSpec with Matchers{
     val parsedReq = HttpRequestTask.parseHttpRequest(req,attrs)
     assert(parsedReq.nonEmpty)
     parsedReq.get.uri should equal("http://hostname:7070/book/100")
-    parsedReq.get.headers.size should equal(1)
+    parsedReq.get.headers.size should equal(2)
     parsedReq.get.headers.get("id") should equal(Some("1000"))
   }
 

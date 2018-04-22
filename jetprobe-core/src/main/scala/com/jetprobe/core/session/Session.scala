@@ -3,6 +3,7 @@ package com.jetprobe.core.session
 import java.util.Date
 
 import com.jetprobe.core.generator.Generator
+import com.jetprobe.core.task._
 import com.jetprobe.core.validations.ValidationResult
 import com.typesafe.scalalogging.LazyLogging
 
@@ -13,8 +14,11 @@ case class Session(
                     testName: String,
                     className : String,
                     attributes: Map[String, Any] = Map.empty,
+                    currentStatus : RunStatus = NotStarted,
+                    exitOnFailure : Boolean = true,
                     records: Generator = Iterator.empty,
                     validationResults : Seq[ValidationResult] = Seq(),
+                    tasks : Map[TaskMeta,TaskMetrics] = Map.empty,
                     startDate: Long = new Date().getTime,
                     onExit: Session => Unit = Session.NothingOnExit
                   ) extends LazyLogging

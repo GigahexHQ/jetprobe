@@ -10,7 +10,7 @@ import scala.io.Source
   */
 trait HttpDSL[B] extends Execs[B] {
 
-  def http(requestBuilder: HttpRequestBuilder) : B = exec(new HttpRequestTaskBuilder(requestBuilder))
+  def http(requestBuilder: HttpRequestBuilder) : B = exec(new HttpRequestTaskBuilder(requestBuilder.requestName,requestBuilder))
 
 
 }

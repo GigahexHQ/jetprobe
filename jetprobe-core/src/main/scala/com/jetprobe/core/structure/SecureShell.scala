@@ -8,7 +8,9 @@ import com.jetprobe.core.task.SSHConfig
   */
 trait SecureShell[B] extends Execs[B]{
 
-  def ssh(config : SSHConfig)(fn : SecuredClient => Unit) : B = exec(new SSHTaskBuilder(fn,config))
+  def ssh(description : String,config : SSHConfig)(fn : SecuredClient => Unit) : B =
+    exec(new SSHTaskBuilder(description,fn,config))
 
+  def defaultCapture : String => Any = println(_)
 
 }

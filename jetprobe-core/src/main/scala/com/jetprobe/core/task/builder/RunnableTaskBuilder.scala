@@ -1,16 +1,16 @@
 package com.jetprobe.core.task.builder
 
-import com.jetprobe.core.task.{Task, TaskMessage, SelfExecutableTask}
+import com.jetprobe.core.task._
 import com.jetprobe.core.storage.Storage
 import com.jetprobe.core.structure.{Config, PipelineContext}
 
 /**
   * @author Shad.
   */
-class RunnableTaskBuilder[T <: Storage](storageConf: Config[T], handler: T => Unit) extends TaskBuilder {
+class RunnableTaskBuilder[T <: Storage](val description : String, storageConf: Config[T], handler: T => Unit) extends TaskBuilder {
 
 
-  val name: String = "RunnableTask"
+  val name: String = description
 
   /**
     *
@@ -22,7 +22,9 @@ class RunnableTaskBuilder[T <: Storage](storageConf: Config[T], handler: T => Un
 
     val runnableMessage = RunnableTaskMessage(storageConf, handler)
 
-    new SelfExecutableTask(name, runnableMessage, next, ctx.system, ctx.controller)({
+    val taskMeta = TaskMeta(name,RunnableTask)
+
+    new SelfExecutableTask(taskMeta, runnableMessage, next, ctx.system, ctx.controller)({
       case (message, sess) => message match {
         case r: RunnableTaskMessage[T] =>
           val storage = r.storageConf.getStorage(sess.attributes)
@@ -42,3 +44,5 @@ case class RunnableTaskMessage[T <: Storage](storageConf: Config[T], handler: T 
   override def name: String = s"Runnable Task on target type: ${storageConf.getClass.getSimpleName}"
 
 }
+
+case object RunnableTask extends TaskType

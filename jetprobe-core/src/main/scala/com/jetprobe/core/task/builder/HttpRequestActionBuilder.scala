@@ -11,16 +11,21 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class HttpRequestTaskBuilder(requestBuilder : HttpRequestBuilder) extends TaskBuilder {
 
-  val name : String = s"HttpTask-${requestBuilder.requestName.replaceAll(" ","_")}"
+case object HttpRequestTask extends TaskType
+
+class HttpRequestTaskBuilder(val description : String, requestBuilder : HttpRequestBuilder) extends TaskBuilder {
+
+
+  val taskMeta = TaskMeta(description,HttpRequestTask)
   /**
     * @param ctx  the test context
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
   override def build(ctx: PipelineContext, next: Task): Task = {
-    new SelfExecutableTask(name,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
+
+    new SelfExecutableTask(taskMeta,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
   }
 
   def handleHttp(taskMessage: TaskMessage, session: Session): Session = taskMessage match {

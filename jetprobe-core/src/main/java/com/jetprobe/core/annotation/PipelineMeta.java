@@ -13,7 +13,5 @@ import java.lang.annotation.Target;
 public @interface PipelineMeta {
 
     String name();
-    String scenario();
-    Class dependsOn();
 
 }

@@ -15,6 +15,13 @@ abstract class BaseActor extends Actor with LazyLogging {
   def scheduler = system.scheduler
   implicit def dispatcher = system.dispatcher
 
+  def stopChildren : Unit = {
+    context.children foreach  { child =>
+      context.unwatch(child)
+      context.stop(child)
+    }
+  }
+
 
   override def preStart(): Unit = context.setReceiveTimeout(Duration.Undefined)
 

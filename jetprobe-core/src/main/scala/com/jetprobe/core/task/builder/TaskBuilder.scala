@@ -7,7 +7,9 @@ import com.typesafe.scalalogging.LazyLogging
 /**
   * @author Shad.
   */
-trait TaskBuilder extends LazyLogging{
+trait TaskBuilder extends LazyLogging {
+
+  val description : String
 
   /**
     * @param ctx the test context

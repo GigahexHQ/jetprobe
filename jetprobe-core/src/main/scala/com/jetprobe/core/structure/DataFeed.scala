@@ -8,11 +8,11 @@ import com.jetprobe.core.storage.Storage
 /**
   * @author Shad.
   */
-trait DataFeed[B] extends Execs[B]{
+trait DataFeed[B] extends Execs[B] {
 
-  def doWith(dataset : DataGenerator)(writer : Iterator[String] => Unit) : B = exec(new IngestionBuilder(dataset,writer))
+  def task(dataset: DataGenerator)(description: String, writer: Iterator[String] => Unit): B = exec(new IngestionBuilder(description, dataset, writer))
 
-  def doWith[S <: Storage](generator: DataGenerator, config : Config[S])(fnRunner : (Iterator[String],S) => Unit) =
-    exec(new StorageIOBuilder[S](generator,config,fnRunner))
+  def task[S <: Storage](description: String, generator: DataGenerator, config: Config[S])(fnRunner: (Iterator[String], S) => Unit) =
+    exec(new StorageIOBuilder[S](description, generator, config, fnRunner))
 
 }

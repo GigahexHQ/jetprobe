@@ -17,7 +17,7 @@ trait Execs[B] {
   def exec(taskBuilder: TaskBuilder): B = chain(List(taskBuilder))
   def exec(taskBuilders: TaskBuilder*): B = chain(taskBuilders.toSeq.reverse)
 
-  def doWith[S <: Storage](config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableTaskBuilder[S](config,handler)))
+  def task[S <: Storage](description : String,config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableTaskBuilder[S](description,config,handler)))
 
    def chain(newTaskBuilders: Seq[TaskBuilder]): B //= newInstance(newTaskBuilders.toList ::: taskBuilders)
 }

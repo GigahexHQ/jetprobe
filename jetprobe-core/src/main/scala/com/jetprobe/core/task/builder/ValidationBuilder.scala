@@ -11,17 +11,18 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class ValidationBuilder[S <: Storage](storeConfig: Config[S], rulesBuilder: S => ValidationRule[S]) extends TaskBuilder {
+case object ValidationTask extends TaskType
+class ValidationBuilder[S <: Storage](val description : String, storeConfig: Config[S], rulesBuilder: S => ValidationRule[S]) extends TaskBuilder {
 
-  val name: String = "ValidationTask"
 
-  /**
+    /**
     * @param ctx  the test context
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
   override def build(ctx: PipelineContext, next: Task): Task = {
-    new SelfExecutableTask(name, ValidationMessage(storeConfig, rulesBuilder, name), next, ctx.system, ctx.controller)(runValidator)
+    val taskMeta = TaskMeta(description,ValidationTask)
+    new SelfExecutableTask(taskMeta, ValidationMessage(storeConfig, rulesBuilder, description), next, ctx.system, ctx.controller)(runValidator)
   }
 
   private[this] def runValidator(message: TaskMessage, session: Session): Session = {
@@ -46,13 +47,47 @@ case class ValidationMessage[S <: Storage](storeConfig: Config[S], rulesBuilder:
 
 }
 
-class RegisterValidation[S <: Storage](storeConfig: Config[S], description: String, fnTest: S => Any) extends TaskBuilder {
+class BasicValidationBuilder(val description: String,fnTest: () => Any) extends TaskBuilder {
+
+  case class ValidationInput(fnTest: () => Any, name: String) extends TaskMessage
+
+  override def build(ctx: PipelineContext, next: Task): Task = {
+
+    val message = ValidationInput(fnTest, description)
+    val tmeta = TaskMeta(description,ValidationTask)
+
+    new SelfExecutableTask(tmeta, message, next, ctx.system, ctx.controller)(runValidator)
+
+  }
+
+  private[this] def runValidator(message: TaskMessage, session: Session): Session = {
+
+    message match {
+      case msg: ValidationInput =>
+
+        val result = Try(msg.fnTest()) match {
+              case Success(_) => ValidationResult.success(msg.name)
+              case Failure(ex) =>
+                logger.error(s"${msg.name} failed the test with message : ${ex.getMessage}")
+                ValidationResult.failed(msg.name,ex.getMessage)
+            }
+
+
+        session.copy(validationResults = session.validationResults ++ Seq(result))
+    }
+
+  }
+
+}
+
+class RegisterValidation[S <: Storage](val description: String,storeConfig: Config[S],fnTest: S => Any) extends TaskBuilder {
 
   override def build(ctx: PipelineContext, next: Task): Task = {
 
     val message = ValidateStorage(storeConfig, fnTest, description)
+    val tmeta = TaskMeta(description,ValidationTask)
 
-    new SelfExecutableTask(description.replaceAll(" ", "-"), message, next, ctx.system, ctx.controller)(runValidator)
+    new SelfExecutableTask(tmeta, message, next, ctx.system, ctx.controller)(runValidator)
 
   }
 
@@ -84,12 +119,11 @@ class RegisterValidation[S <: Storage](storeConfig: Config[S], description: Stri
 
 }
 
-class PropertyValidation[D](val property: D, val fn: D => Any) extends TaskBuilder {
-
-  val name: String = getClass.getSimpleName
+class PropertyValidation[D](val description : String,val property: D, val fn: D => Any) extends TaskBuilder {
 
   override def build(ctx: PipelineContext, next: Task): Task = {
-    new SelfExecutableTask(name, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
+    val taskMeta = TaskMeta(description,ValidationTask)
+    new SelfExecutableTask(taskMeta, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
   }
 
   private[this] def runValidation(message: TaskMessage, session: Session): Session = message match {
@@ -105,5 +139,5 @@ class PropertyValidation[D](val property: D, val fn: D => Any) extends TaskBuild
 
 case class ValidationRequest[D](request: PropertyValidation[D]) extends TaskMessage {
 
-  override def name: String = request.name
+  override def name: String = request.description
 }

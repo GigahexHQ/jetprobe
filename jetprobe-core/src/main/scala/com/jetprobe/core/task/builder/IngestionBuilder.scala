@@ -9,9 +9,9 @@ import com.jetprobe.core.structure.{Config, PipelineContext}
 /**
   * @author Shad.
   */
-class IngestionBuilder(datasetGen : DataGenerator, writer : Iterator[String] => Unit) extends TaskBuilder {
+case object IngestionTask extends TaskType
 
-  val name = "IngestTask"
+class IngestionBuilder(val description : String, datasetGen : DataGenerator, writer : Iterator[String] => Unit) extends TaskBuilder {
 
   def handleIngest(message : TaskMessage,session: Session) : Session = {
     val result = message match {
@@ -34,13 +34,17 @@ class IngestionBuilder(datasetGen : DataGenerator, writer : Iterator[String] => 
   override def build(ctx: PipelineContext, next: Task): Task = {
 
     val msg = IngestTaskMessage(datasetGen)
-    new SelfExecutableTask(name,msg,next,ctx.system,ctx.controller) (handleIngest)
+    val taskMeta = TaskMeta(description,IngestionTask)
+    new SelfExecutableTask(taskMeta,msg,next,ctx.system,ctx.controller) (handleIngest)
   }
 
 
 }
 
-class StorageIOBuilder[S <: Storage](datasetGen : DataGenerator,conf : Config[S], handler : (Iterator[String],S) => Unit) extends TaskBuilder with TaskMessage {
+case object StorageIOTask extends TaskType
+
+class StorageIOBuilder[S <: Storage](val description : String,datasetGen : DataGenerator,conf : Config[S], handler : (Iterator[String],S) => Unit)
+  extends TaskBuilder with TaskMessage {
 
   def handleIngest(message: TaskMessage,session: Session) : Session = message match {
     case task : StorageIOBuilder[S] =>
@@ -52,16 +56,16 @@ class StorageIOBuilder[S <: Storage](datasetGen : DataGenerator,conf : Config[S]
       }
       session
 
-
   }
 
   override def build(ctx: PipelineContext, next: Task): Task = {
 
-    new SelfExecutableTask(name,this,next,ctx.system,ctx.controller)(handleIngest)
+    val taskMeta = TaskMeta(name,StorageIOTask)
+    new SelfExecutableTask(taskMeta,this,next,ctx.system,ctx.controller)(handleIngest)
 
   }
 
-  override def name: String = s"Ingest-data-with-generator-${datasetGen.getClass.getSimpleName}-${conf.getClass.getSimpleName}"
+  override def name: String = s"Data Ingestion with ${datasetGen.getClass.getSimpleName}"
 }
 
 case class IngestTaskMessage(dataGen : DataGenerator) extends TaskMessage {
