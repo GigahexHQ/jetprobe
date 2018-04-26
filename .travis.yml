@@ -7,7 +7,7 @@ scala:
 sudo: false
 
 script:
-  - sbt clean test
+  - sbt ++$TRAVIS_SCALA_VERSION test
 
 jdk:
   - oraclejdk8
