@@ -50,12 +50,5 @@ class ExpressionParserSpec extends FlatSpec with Matchers{
 
   }
 
-  it should "work with loooong string" in {
-    val json = Source.fromFile("C:\\Users\\samez\\Documents\\match-service\\MDMN-9162\\fuzzy-model.json").mkString("").split('\n').map(_.trim.filter(_ >= ' ')).mkString
-    val extractedVal = ExpressionParser.parse(json,config)
-    assert(extractedVal.nonEmpty)
-    println(extractedVal.get)
-
-  }
 
 }
