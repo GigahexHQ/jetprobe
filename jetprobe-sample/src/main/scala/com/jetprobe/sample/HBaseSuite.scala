@@ -2,7 +2,7 @@ package com.jetprobe.sample
 
 import com.jetprobe.core.TestPipeline
 import com.jetprobe.core.task.SSHConfig
-import com.jetprobe.core.annotation.{PipelineMeta, TestSuite}
+import com.jetprobe.core.annotation.PipelineMeta
 import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.jetprobe.hbase.storage.HBaseConfig
 import org.json4s.{JsonAST, _}

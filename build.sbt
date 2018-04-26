@@ -17,12 +17,13 @@ lazy val root = Project("jetprobe", file("."))
   .dependsOn(Seq(core,rabbitConnector,mongoConnector,consulConnector,hbaseConnector,hadoopConnector).map(_ % "compile->compile;test->test"): _*)
   .settings(basicSettings: _*)
   .enablePlugins(JavaAppPackaging)
+    .aggregate(core,hadoopConnector,hbaseConnector)
 
 def jetProbeModule(id: String) = Project(id, base = file(id))
 
 def jetProbeConnector(id: String) = Project(id, base = file("jetprobe-connectors/" + id))
 
-packMain := Map("jetprobe" -> "com.jetprobe.core.runner.TestRunner")
+packMain := Map("jetprobe" -> "com.jetprobe.core.runner.JetprobeCLI")
 
 packResourceDir += (baseDirectory.value / "web/static" -> "static")
 
@@ -31,7 +32,7 @@ lazy val commons = jetProbeModule("jetprobe-common")
   .settings(libraryDependencies ++= coreDependencies)
 
 lazy val core = jetProbeModule("jetprobe-core")
-  .dependsOn(commons % "compile->compile;test->test")
+  //.dependsOn(commons % "compile->compile;test->test")
   .settings(basicSettings: _*)
   .settings(libraryDependencies ++= coreDependencies ++ testDependencies)
   .enablePlugins(PackPlugin)

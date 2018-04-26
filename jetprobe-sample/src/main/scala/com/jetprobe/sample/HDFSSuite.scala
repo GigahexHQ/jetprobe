@@ -1,7 +1,7 @@
 package com.jetprobe.sample
 
 import com.jetprobe.core.TestPipeline
-import com.jetprobe.core.annotation.{PipelineMeta, TestSuite}
+import com.jetprobe.core.annotation.PipelineMeta
 import com.jetprobe.core.generator.TemplateDataGen
 import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.jetprobe.hadoop.storage.{HDFSConfig, HDFSStorage}
@@ -23,21 +23,23 @@ class HDFSSuite extends TestPipeline {
 
   override def tasks: PipelineBuilder= {
 
-      /*task(datagen,hdfsConf){ (data,hdfs) =>
+      task("Copy sample data",datagen,hdfsConf){ (data,hdfs) =>
 
         hdfs.mkdir("/user/shad/data")
         hdfs.write(data,"/user/shad/data/sample.in")
 
       }
 
-      task(hdfsConf){ hadoop =>
+      task("Cp sample directories",hdfsConf){ hadoop =>
 
         //Copy the file
         hadoop.copyFromLocal(localSrc= """/local/source/path""", destination = "/destination/path.out")
 
         hadoop.copyToLocal("/path/to/hdfs","""/path/to/local""")
 
-      }*/
+      }
+
+    runCmd("local cmd","ls -al")
 
     validate("HDFS validate",hdfsConf){ hdfs =>
 

@@ -3,7 +3,7 @@ package com.jetprobe.sample
 import java.util
 
 import com.jetprobe.core.TestPipeline
-import com.jetprobe.core.annotation.{PipelineMeta, TestSuite}
+import com.jetprobe.core.annotation.PipelineMeta
 import com.jetprobe.core.fs.{FilePath, FileStorage}
 import com.jetprobe.core.structure.PipelineBuilder
 import com.jetprobe.rabbitmq.storage.RabbitMQConfig
