@@ -29,7 +29,7 @@ object JetprobeCLI extends LazyLogging {
     val parsedConfig = CmdConfig.parser.parse(args, CmdConfig())
     parsedConfig match {
       case Some(conf) =>
-        val result = parseConfigAndRun(conf.jobJarPath, conf.configFile, conf.reportPath)
+        val result = parseConfigAndRun(conf.jobJarPath, conf.configFile)
         if(result.isLeft) {
           logger.error(s"Job failed : ${result.left.get.getMessage}")
         }
@@ -40,7 +40,7 @@ object JetprobeCLI extends LazyLogging {
 
   }
 
-  def parseConfigAndRun(jarPath: Option[File], configFile: String, reportPath: String): Either[Throwable, Unit] = {
+  def parseConfigAndRun(jarPath: Option[File], configFile: String): Either[Throwable, Unit] = {
   val jobController =  jarPath match {
       case Some(jarFile) =>
         val classURL = jarFile.toURI.toURL

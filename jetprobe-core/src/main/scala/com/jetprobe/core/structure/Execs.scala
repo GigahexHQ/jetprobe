@@ -15,7 +15,9 @@ trait Execs[B] {
   private[core] def taskBuilders: List[TaskBuilder]
 
   def exec(taskBuilder: TaskBuilder): B = chain(List(taskBuilder))
-  def exec(taskBuilders: TaskBuilder*): B = chain(taskBuilders.toSeq.reverse)
+  //def exec(taskBuilders: TaskBuilder*): B = chain(taskBuilders.toSeq.reverse)
+
+  def exec(taskBuilders: Seq[TaskBuilder]): B = chain(taskBuilders.reverse)
 
   def task[S <: Storage](description : String,config : Config[S])(handler : S => Unit) : B = chain(List(new RunnableTaskBuilder[S](description,config,handler)))
 

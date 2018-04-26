@@ -13,9 +13,9 @@ trait Validations[B] extends Execs[B] {
 
 
 
-  /*def validateWith[S <: Storage](description: String, config: Config[S])(fnRuleBuilder: S => ValidationRule[S]) = {
+  def validateGiven[S <: Storage](description: String, config: Config[S])(fnRuleBuilder: S => ValidationRule[S]) = {
     exec(new ValidationBuilder[S](description, config, fnRuleBuilder))
-  }*/
+  }
 
   def validate[S <: Storage](description: String, config: Config[S])(testFn: S => Any) =
     exec(new RegisterValidation[S](description, config, testFn))

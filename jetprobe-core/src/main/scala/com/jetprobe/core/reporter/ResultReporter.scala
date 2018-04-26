@@ -20,10 +20,10 @@ case class ValidationReport(suite : String,
                             failedCount : Int,
                             successCount : Int,
                             skippedCount : Int,
-                            startTime : Date,
-                            endTime : Date,
                             finalSatus : ValidationStatus,
                             detailReport : Seq[ValidationResult])
+
+
 
 
 

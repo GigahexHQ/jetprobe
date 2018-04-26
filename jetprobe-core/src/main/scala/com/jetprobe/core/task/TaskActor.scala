@@ -51,15 +51,15 @@ abstract class TaskBackedActor(next : Task,controller : ActorRef) extends BaseAc
           session
         } else execute(message,session)
       } match {
+
         case Success(sess) =>
           val taskStatus = if(shouldBeSkipped) Skipped else Completed
           val metrics = new TaskMetrics(startTime,new Date().getTime,taskStatus)
           controller ! ExecuteNext(next,sess.copy(currentStatus = taskStatus,tasks = sess.tasks + (task -> metrics)),false,metrics)
+
         case Failure(ex) =>
           logger.error(s"Exception occurred while executing the task : ${task.description} : ${ex.getMessage}")
-
           val metrics = new TaskMetrics(startTime,new Date().getTime,Failed)
-
           controller ! ExecuteNext(next,session.copy(currentStatus = Failed,tasks = session.tasks + (task -> metrics)),false,metrics)
       }
 

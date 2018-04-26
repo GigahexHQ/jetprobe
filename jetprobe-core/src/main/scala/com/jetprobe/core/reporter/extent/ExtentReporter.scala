@@ -1,31 +1,56 @@
 package com.jetprobe.core.reporter.extent
 
+import java.util.Date
+
 import com.aventstack.extentreports.ExtentReports
 import com.aventstack.extentreports.reporter.{ExtentHtmlReporter, KlovReporter}
 import com.jetprobe.core.reporter.{ResultReporter, ValidationReport}
 import com.jetprobe.core.validations.{Failed, Passed, Skipped}
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.{Failure, Success, Try}
 
 /**
   * @author Shad.
   */
-class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : String) extends ResultReporter {
+class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String]) extends ResultReporter {
 
   val htmlReporter = new ExtentHtmlReporter(fileName)
-  val klov = new KlovReporter(project,reportName)
-  klov.initMongoDbConnection(mongoHost)
+  lazy val klov : Option[KlovReporter] = {
+    mongoHost.map(host => new KlovReporter(project,reportName))
+
+  }
+
 
 
   override def write(reports: Seq[ValidationReport]): Unit = {
     val extent = new ExtentReports()
-    extent.attachReporter(htmlReporter,klov)
+    klov match {
+      case Some(kv) =>
+        try {
+          kv.initMongoDbConnection(mongoHost.get)
+          extent.attachReporter(htmlReporter,kv)
+        } catch {
+          case e : Exception =>
+            e.printStackTrace()
+        }
+
+      case None => extent.attachReporter(htmlReporter)
+
+    }
+
 
     reports.filter(p => p.detailReport.nonEmpty).foreach{ report =>
 
       val testSuite = extent.createTest(report.suite)
-      testSuite.getModel.setStartTime(report.startTime)
-      testSuite.getModel.setEndTime(report.endTime)
+      val (testSuiteStart,testSuiteEnd) = report.detailReport.foldLeft((Long.MaxValue,Long.MinValue)) {
+        case ((st,end),result) =>
+          val lowestStartTime = if(st > result.startTime) result.startTime else st
+          val maxEndTime = if(end > result.endTime) end else result.endTime
+          (lowestStartTime,maxEndTime)
+      }
+      testSuite.getModel.setStartTime(new Date(testSuiteStart))
+      testSuite.getModel.setEndTime(new Date(testSuiteEnd))
 
       if(report.finalSatus == Passed){
         testSuite.pass("Test Passed")
@@ -38,6 +63,8 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
       report.detailReport.foreach{ result =>
 
         val test = testSuite.createNode(result.testName)
+        test.getModel.setStartTime(new Date(result.startTime))
+        test.getModel.setEndTime(new Date(result.endTime))
         result.status match {
           case Passed => test.pass(s"${result.testName} passed")
           case Skipped => test.skip(s"${result.message}")
@@ -49,23 +76,25 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
     }
 
     extent.flush()
-    klov.flush()
+    if(klov.nonEmpty){
+      klov.get.flush()
+    }
   }
 
 }
 
-object ExtentReporter {
+object ExtentReporter extends LazyLogging{
 
   val propProjectName = "reporter.extent.project"
   val propFileName = "reporter.extent.fileName"
   val propReportName = "reporter.extent.reportName"
   val propMongoHost = "reporter.extent.mongoHost"
 
-  def build(config : Map[String,Any]) : Option[ExtentReporter] = {
+  def build(scenarioName : String, config : Map[String,Any]) : Option[ExtentReporter] = {
     val reporter = Try{
       val projectName = config(propProjectName).toString
       val fileName = config(propFileName).toString
-      val mongoHost = config(propMongoHost).toString
+      val mongoHost = config.get(propMongoHost).map(_.asInstanceOf[String])
       val reportName = config(propReportName).toString
       (projectName,fileName,mongoHost,reportName)
     }
@@ -73,7 +102,7 @@ object ExtentReporter {
     reporter match {
       case Success((projectName,fileName,mongoHost,reportName)) => Some(new ExtentReporter(fileName,projectName,reportName,mongoHost))
       case Failure(exception) =>
-        println(s"Failed while building extent reporter : ${exception.getMessage}")
+        logger.warn(s"Extent reporter missing fields : ${exception.getMessage}")
         None
     }
   }

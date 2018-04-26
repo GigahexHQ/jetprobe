@@ -5,6 +5,7 @@ package com.jetprobe.core.common
   */
 object DefaultConfigs {
 
+
   val cssPathAttr = "report.cssPaths"
   val jsPathAttr = "report.jsPaths"
   val htmlReportAttr = "report.outputPath"

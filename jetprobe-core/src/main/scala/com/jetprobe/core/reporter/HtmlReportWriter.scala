@@ -1,5 +1,6 @@
 package com.jetprobe.core.reporter
 
+import java.awt.Desktop
 import java.io.{File, PrintWriter}
 
 import com.jetprobe.core.common.DefaultConfigs
@@ -13,19 +14,21 @@ import DefaultConfigs._
 /**
   * @author Shad.
   */
-class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
+class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String) extends ResultReporter {
 
   import HtmlReportWriter._
 
-  private val defaultCssPaths = Seq("css/materialize.min.css", "css/style.css")
+  private val defaultCssPaths = Seq( "/static/css/style.css")
+  private val materialCss = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.css"
 
   override def write(reports: Seq[ValidationReport]): Unit = {
 
-    val cssPaths = config.get("report.cssPaths") match {
-      case Some(path) => path.toString.split(",").toSeq
-      case None => defaultCssPaths
-    }
-    val jsPaths = config.get(jsPathAttr) match {
+    val cssPaths = defaultCssPaths.map{ path =>
+      val modPath = if(Desktop.isDesktopSupported) path.replace("/","\\") else path
+      jpInstallPath + modPath
+    } ++ Seq(materialCss)
+    val htmlConf = staticResourceConfig(jpInstallPath)
+    val jsPaths = htmlConf.get(jsPathAttr) match {
       case Some(path) => path.toString.split(",").toSeq
       case None => defaultJsPaths.split(",").toSeq
     }
@@ -43,10 +46,7 @@ class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
 
     )
 
-    val outputPath = config.get(DefaultConfigs.htmlReportAttr) match {
-      case Some(path) => path.toString
-      case None => "./report.html"
-    }
+    val outputPath = config(HtmlReportWriter.htmlReportPath).toString
 
     val pw = new PrintWriter(new File(outputPath))
     pw.write(htmlContent)
@@ -57,6 +57,8 @@ class HtmlReportWriter(config: Map[String, Any]) extends ResultReporter {
 }
 
 object HtmlReportWriter {
+
+  val htmlReportPath = "reporter.html.outputPath"
 
   def docHead(title: String, cssPaths: Seq[String], jsPaths: Seq[String]): TypedTag[String] = {
     head(

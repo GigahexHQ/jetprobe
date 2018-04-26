@@ -5,7 +5,7 @@ import java.io.File
 /**
   * @author Shad.
   */
-case class CmdConfig(jobJarPath : Option[File] = None, configFile : String = "scenario.yml", reportPath : String = "./report.html")
+case class CmdConfig(jobJarPath : Option[File] = None, configFile : String = "scenario.yml")
 
 object CmdConfig {
 
@@ -19,10 +19,6 @@ object CmdConfig {
     opt[String]('c', "config").required().valueName("<config>").
       action( (x, c) => c.copy(configFile = x) ).
       text("Yaml config file path")
-
-    opt[String]('r', "reportPath").valueName("<path>").
-      action( (x, c) => c.copy(reportPath = x) ).
-      text("Report output file path")
 
     help("help").text("prints this usage text")
 

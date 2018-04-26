@@ -15,6 +15,7 @@ class JobControllerActorSpec() extends TestKit(ActorSystem("MySpec")) with Impli
     TestKit.shutdownActorSystem(system)
   }
 
+
   "JobController " must {
     "start Job execution" in {
 
@@ -26,5 +27,4 @@ class JobControllerActorSpec() extends TestKit(ActorSystem("MySpec")) with Impli
 
     }
   }
-
 }

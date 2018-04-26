@@ -3,7 +3,7 @@ package com.jetprobe.core.task
 import java.util.Date
 
 import akka.actor.ActorRef
-import com.jetprobe.core.runner.PipelineManager.ScenarioCompleted
+import com.jetprobe.core.runner.PipelineManager.PipelineCompleted
 import com.jetprobe.core.session.{Session, UserMessage}
 
 /**
@@ -17,7 +17,7 @@ class Exit(controller: ActorRef) extends Task {
 
   override def execute(session: Session): Unit = {
     logger.info("exiting the scenario")
-    controller ! ScenarioCompleted(session)
+    controller ! PipelineCompleted(session)
 
   }
 

@@ -5,10 +5,10 @@ import java.lang.reflect.Modifier
 import akka.actor.{Actor, ActorRef, Props}
 import com.jetprobe.core.TestPipeline
 import com.jetprobe.core.annotation.PipelineMeta
-import com.jetprobe.core.common.{ConfigReader, DefaultConfigs}
+
 import com.jetprobe.core.flow.JobController.{ScenarioCompleted, UpdateJobEnvVars}
 import com.jetprobe.core.flow.JobDescriptors.{Pipeline, PipelineStats}
-import com.jetprobe.core.flow.ScenarioExecutor.StartScenarioExecution
+
 import com.jetprobe.core.runner.PipelineManager
 import com.jetprobe.core.runner.PipelineManager.{StartPipelineExecution, UpdatePipelineEnvVars}
 
@@ -39,6 +39,7 @@ class ScenarioExecutor(name : String, pipes: mutable.Queue[ExecutablePipeline], 
       pipeActor ! StartPipelineExecution
 
     case PipelineComplete(stats,session,status) =>
+
       pipelinesMetrics += stats
       if(pipes.isEmpty) {
         controller ! ScenarioCompleted(name,pipelinesMetrics,status)
