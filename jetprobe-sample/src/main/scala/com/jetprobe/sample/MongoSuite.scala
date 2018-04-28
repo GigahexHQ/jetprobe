@@ -15,7 +15,7 @@ import org.json4s.native.JsonMethods._
 class MongoSuite extends TestPipeline with LazyLogging {
 
 
-  val mongoConf = new MongoDBConf("mongodb://<mongo.host.name>")
+  val mongoConf = new MongoDBConf("mongodb://${mongo.host.name}")
 
   case class Person(_id: Long, name: String, age: Int)
 
@@ -26,7 +26,7 @@ class MongoSuite extends TestPipeline with LazyLogging {
 
     task("Create Mongo Collection",mongoConf) { mongoDB =>
 
-      mongoDB.createCollection("foo", "bar",Seq("id","name"))
+      mongoDB.createCollection(db= "customer", collection = "purchase",indexFields = Seq("name","product"))
       mongoDB.createCollection("zoo", "baz")
 
     }

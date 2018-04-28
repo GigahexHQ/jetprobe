@@ -3,7 +3,6 @@ package com.jetprobe.sample
 import akka.actor.ActorSystem
 import com.jetprobe.core.TestPipeline
 import com.jetprobe.core.annotation.PipelineMeta
-import com.jetprobe.core.runner.Runner
 import com.jetprobe.core.structure.PipelineBuilder
 
 /**
@@ -21,18 +20,8 @@ class LocalCommandPipe extends TestPipeline{
 
     runCmd("get maven version","mvn --version")
 
-    //show the node version
-    runCmd("yarn start","""C:\Users\samez\Documents\projects\jetprobe-gitlab\jetprobe-ui""")
-
-    //runCmd("mvn install -DskipTests",at = """C:\Users\samez\Perforce\match-nxt\code\match""")
+    runCmd("install the code","mvn install -DskipTests")
 
   }
 }
 
-object LocalCommandPipeRun extends App {
-
-  implicit val system = ActorSystem("local-cmd")
-
-  Runner().run(new LocalCommandPipe().tasks.build())
-
-}

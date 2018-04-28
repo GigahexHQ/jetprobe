@@ -50,8 +50,7 @@ class HBaseSuite extends TestPipeline {
 
       client.upload("/from/file/path","/to/target/file/path")
 
-      client.download("","")
-
+      client.download("/source/","/download")
 
 
     }
@@ -72,7 +71,7 @@ class HBaseSuite extends TestPipeline {
 
     }
 
-    validate("check if tables are created",hbaseConf) { hbase =>
+    validate("check table properties",hbaseConf) { hbase =>
 
       given(hbase.describe("infa:employee")) { desc =>
 
