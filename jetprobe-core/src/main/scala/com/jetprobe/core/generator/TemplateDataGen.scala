@@ -49,12 +49,6 @@ class TemplateDataGen(template: String, datasetPath: String, rows: Int ,indexed 
             str: String =>
               val strPattern = getField(str)
               val fieldVal = randomGen(strPattern,randomVal)
-              /*val fieldVal = {
-                if (strPattern.equals("Random.UUID"))
-                  UUID.randomUUID().toString
-                else
-                  randomVal.getOrElse(strPattern, str)
-              }*/
               temp = getRegex(strPattern).replaceAllIn(temp, fieldVal)
           }
           temp

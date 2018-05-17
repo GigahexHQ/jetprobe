@@ -3,21 +3,21 @@ package com.jetprobe.core.flow
 import java.lang.reflect.Modifier
 
 import akka.actor.{Actor, ActorRef, Props}
+import akka.pattern._
+import akka.util.Timeout
 import com.jetprobe.core.TestPipeline
 import com.jetprobe.core.annotation.PipelineMeta
-
 import com.jetprobe.core.flow.JobController.{ScenarioCompleted, UpdateJobEnvVars}
 import com.jetprobe.core.flow.JobDescriptors.{Pipeline, PipelineStats}
-
 import com.jetprobe.core.runner.PipelineManager
-import com.jetprobe.core.runner.PipelineManager.{StartPipelineExecution, UpdatePipelineEnvVars}
-
+import com.jetprobe.core.runner.PipelineManager.{GetRunningStats, StartPipelineExecution, UpdatePipelineEnvVars}
 import com.jetprobe.core.session.Session
 import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.jetprobe.core.task.{BaseActor, RunStatus, TaskMetrics}
-
+import scala.concurrent.duration._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -53,6 +53,22 @@ class ScenarioExecutor(name : String, pipes: mutable.Queue[ExecutablePipeline], 
         case FromJobController => context.children.foreach(actor => actor ! UpdatePipelineEnvVars(vars,FromScenarioExecutor))
       }
 
+    case GetCurrentPipelineStats =>
+      implicit val timeout = Timeout(1.seconds)
+      val result = context.children.map{ child =>
+        val res = child ? GetRunningStats
+        res.mapTo[PipelineStats]
+      }
+
+        Future.sequence(result).onComplete {
+          case Success(xs) => sender() ! pipelinesMetrics.toList ::: xs.toList
+          case Failure(ex) => logger.error(s"Exception occurred while getting current pipeline stats : ${ex.getMessage}")
+        }
+
+
+
+
+
   }
 
 
@@ -70,6 +86,8 @@ object ScenarioExecutor {
   case class StartScenarioExecution(params: Map[String,Any])
   case class PipelineComplete(stats : PipelineStats, currentSession : Session,status : RunStatus)
   case class UpdateScnEnvVariables(vars : Map[String,Any], eventSource: EventSource)
+  case object GetCurrentPipelineStats
+
 
   def props(name : String, pipes: mutable.Queue[ExecutablePipeline], controller: ActorRef) : Props = Props(new ScenarioExecutor(name,pipes,controller))
 

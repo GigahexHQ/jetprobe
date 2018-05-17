@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String]) extends ResultReporter {
+class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String]) extends ResultReporter with LazyLogging {
 
   val htmlReporter = new ExtentHtmlReporter(fileName)
   lazy val klov : Option[KlovReporter] = {
@@ -32,7 +32,10 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
           extent.attachReporter(htmlReporter,kv)
         } catch {
           case e : Exception =>
-            e.printStackTrace()
+            logger.warn(s"Unable to connect with mongo db : ${e.getMessage}")
+            //e.printStackTrace()
+            extent.attachReporter(htmlReporter)
+
         }
 
       case None => extent.attachReporter(htmlReporter)
