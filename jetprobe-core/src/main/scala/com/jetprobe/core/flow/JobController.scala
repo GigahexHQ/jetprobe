@@ -23,10 +23,12 @@ import scala.io.Source
   * @author Shad.
   */
 
-class JobController(scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader] = None) extends BaseActor {
+class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader] = None, shutDownWhenDone : Boolean = false) extends BaseActor {
 
   private val jpHome = "JP_HOME"
   private val jpProperty = "jp.home"
+
+  val scenarioMetrics : mutable.Map[String,ArrayBuffer[PipelineStats]] = mutable.Map.empty
 
   val clsLoader = classLoader match {
     case Some(x) => x
@@ -58,6 +60,7 @@ class JobController(scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[
 
     case ScenarioCompleted(name, metrics, status) =>
       logger.info(s"Job completed ")
+      scenarioMetrics += (name -> metrics)
 
       //Display the validation report if present.
       val validationReports = metrics.filter(_.validationResults.size > 0) map { stats =>
@@ -89,14 +92,9 @@ class JobController(scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[
 
         (htmlReportWriter,reportPath) match {
           case (Some(htmlWriter),Some(htmlReport)) => htmlWriter.write(validationReports)
-          case _ => logger.warn("Html report would be skipped. Missing html report output path")
+          case _ => logger.warn(s"Html report would be skipped. Missing html report output path property : ${HtmlReportWriter.htmlReportPath}")
         }
       }
-
-
-
-
-      //
 
 
 
@@ -108,11 +106,16 @@ class JobController(scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[
       logger.info(s"Job completed with status : ${status.toString} and message : ${message}")
       stopChildren
       context stop self
-      context.system.terminate().onComplete({
-        case _ =>
-          logger.info("Actor system shutdown")
-        //System.exit(0)
-      })
+      if(shutDownWhenDone){
+        context.system.terminate().onComplete({
+          case _ =>
+            logger.info("Actor system shutdown")
+          //System.exit(0)
+        })
+      }
+
+
+
 
     case UpdateJobEnvVars(vars, eventSource) =>
       envVars = envVars ++ vars
@@ -133,9 +136,13 @@ object JobController {
 
   val actorName = "JobController"
 
-  type JobParams = (mutable.Queue[ScenarioMeta], Option[ClassLoader])
+  type JobParams = (String, mutable.Queue[ScenarioMeta], Option[ClassLoader])
 
-  def props(scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader]): Props = Props(new JobController(scenarios, classLoader))
+  def props(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader]): Props =
+    Props(new JobController(project,scenarios, classLoader))
+
+  def props(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader],shutDownWhenDone : Boolean): Props =
+    Props(new JobController(project,scenarios, classLoader,shutDownWhenDone))
 
   case object StartJobExecution
 
@@ -171,7 +178,7 @@ object JobController {
           .leftMap(err => err.underlying)
           .flatMap { js =>
             val extractScn = js.as[ScenarioMeta]
-            extractScn.map(v => (mutable.Queue(v), optClassLoader))
+            extractScn.map(v => (v.project,mutable.Queue(v), optClassLoader))
 
           }
 

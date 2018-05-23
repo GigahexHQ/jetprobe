@@ -6,18 +6,22 @@ import java.nio.channels.FileChannel
 import com.jetprobe.core.parser.ExpressionParser
 import com.jetprobe.core.storage.{Storage, StorageQuery}
 import com.jetprobe.core.structure.Config
-import com.jetprobe.core.validations.ValidationRule
+import com.jetprobe.core.validations.{ValidationExecutor, ValidationResult, ValidationRule}
 
 import scala.io.Source
+import java.io.{File => JFile}
 
 
 /**
   * @author Shad.
   */
-class FileStorage private[jetprobe](path: String) extends Storage {
+class FileStorage private[jetprobe](path: String) extends Storage with ValidationExecutor[FileStorage] {
+
+  val underLyingFile = new JFile(path)
 
   /**
     * Move the file to the destination
+    *
     * @param destination
     */
   def moveTo(destination: String): Unit = {
@@ -26,6 +30,7 @@ class FileStorage private[jetprobe](path: String) extends Storage {
 
   /**
     * Write the data to the file
+    *
     * @param data
     */
   def write(data: Iterator[String]): Unit = {
@@ -44,13 +49,14 @@ class FileStorage private[jetprobe](path: String) extends Storage {
 
   /**
     * Copy the file to the destination
+    *
     * @param destination
     */
   def copyTo(destination: String): Unit = {
     var sourceChannel: FileChannel = null
     var destChannel: FileChannel = null
     try {
-      sourceChannel = new FileInputStream(new File(path)).getChannel
+      sourceChannel = new FileInputStream(new JFile(path)).getChannel
       destChannel = new FileOutputStream(new File(destination)).getChannel
       destChannel.transferFrom(sourceChannel, 0, sourceChannel.size)
     } finally {
@@ -59,27 +65,80 @@ class FileStorage private[jetprobe](path: String) extends Storage {
     }
   }
 
-  def usingFile[T](fn : File => T) : T = {
-    fn(new File(path))
+  def usingFile[T](fn: File => T): T = {
+    fn(new JFile(path))
   }
 
-  def lines() : Iterator[String] = {
-    Source.fromFile(new File(path)).getLines()
+  def lines(): Iterator[String] = {
+    Source.fromFile(new JFile(path)).getLines()
+  }
+
+
+  /**
+    *
+    * @param count
+    * @return
+    */
+  def hasTotalLines(count: Int): ValidationResult = {
+    val file = new File(path)
+    assertThat[File, Int](count, file) { file =>
+      Source.fromFile(file).getLines().size
+    }
   }
 
   /**
+    * Assert if the file is nonEmpty
+    *
+    * @return
+    */
+  def isNonEmpty(): ValidationResult = {
+    val file = new File(path)
+    assertThat[File, Boolean](true, file) { file =>
+      Source.fromFile(file).getLines().nonEmpty
+    }
+  }
+
+  def isDirectory() : ValidationResult = {
+    assertThat(true,underLyingFile)(file => file.isDirectory)
+  }
+
+
+  /**
+    * assert count of lines based on some condition
+    * @param count
+    * @param whereCondn
+    * @return
+    */
+  def hasLines(count: Int)(whereCondn: String => Boolean): ValidationResult = {
+    assertThat(count,underLyingFile){ file =>
+      Source.fromFile(file).getLines().count(whereCondn)
+    }
+  }
+
+
+  def hasLines(whereCondn: String => Boolean): ValidationResult = {
+    assertThat(true,underLyingFile){ file =>
+      Source.fromFile(file).getLines().count(whereCondn) > 0
+    }
+  }
+
+
+
+
+  /**
     * Delete the file
+    *
     * @return true if success else false
     */
-  def rm : Boolean = new File(path).delete()
+  def rm: Boolean = new File(path).delete()
 
 
 }
 
-class FilePath(path : String) extends Config[FileStorage] {
+class FilePath(path: String) extends Config[FileStorage] {
 
-  override private[jetprobe] def getStorage(sessionConf: Map[String, Any]) : FileStorage = {
-    ExpressionParser.parse(path,sessionConf) match {
+  override private[jetprobe] def getStorage(sessionConf: Map[String, Any]): FileStorage = {
+    ExpressionParser.parse(path, sessionConf) match {
       case Some(p) => new FileStorage(p)
       case None => throw new IllegalArgumentException(s"Unable to parse the expression : ${path}")
     }

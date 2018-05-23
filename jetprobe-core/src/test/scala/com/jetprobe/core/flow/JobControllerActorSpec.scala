@@ -20,7 +20,7 @@ class JobControllerActorSpec() extends TestKit(ActorSystem("MySpec")) with Impli
     "start Job execution" in {
 
       val jobMeta = JobController.buildFromConfig("testScn.yml",None)
-      val jc = system.actorOf(JobController.props(jobMeta.right.get._1,jobMeta.right.get._2))
+      val jc = system.actorOf(JobController.props(jobMeta.right.get._1, jobMeta.right.get._2,jobMeta.right.get._3))
 
       jc ! StartJobExecution
       expectNoMsg()

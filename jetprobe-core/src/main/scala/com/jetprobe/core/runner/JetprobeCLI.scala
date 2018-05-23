@@ -57,7 +57,7 @@ object JetprobeCLI extends LazyLogging {
       case Right(jc) =>
         val system = ActorSystem("Jetprobe-executioner")
         JobEnvironment.system = system
-        val jcActor = system.actorOf(JobController.props(jc._1,jc._2),JobController.actorName)
+        val jcActor = system.actorOf(JobController.props(jc._1, jc._2,jc._3,true),JobController.actorName)
         jcActor ! StartJobExecution
         Right(Unit)
     }

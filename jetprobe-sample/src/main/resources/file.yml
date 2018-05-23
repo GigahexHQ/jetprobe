@@ -1,0 +1,24 @@
+name : Checkout experience of customers
+project : user-analytics
+
+tags :
+  - https
+  - performance
+  - test
+
+# params for the scenario
+params :
+  app.filePath : /path/to/SecondaryFile
+ # reporter.extent.reportName : http Tests
+  reporter.extent.mongoHost : 192.168.37.128
+
+pipelines :
+  - name : Login
+    className : com.jetprobe.sample.FileSuite
+    description : Sample Tests for http
+    exitOnFailure : true
+
+
+
+
+

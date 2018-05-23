@@ -33,6 +33,10 @@ trait TestPipeline extends CoreDsl{
     }
   }
 
+  def assertTrue(actual : => sourcecode.Text[Boolean])(implicit line: sourcecode.Line, fullName: sourcecode.FullName) : ValidationResult = {
+    assertEquals(true,actual)
+  }
+
 
 }
 

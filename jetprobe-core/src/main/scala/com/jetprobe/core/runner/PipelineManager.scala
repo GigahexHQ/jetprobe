@@ -22,7 +22,8 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
   var startTime: Date = new Date()
   var session: Session = _
   val metricsReport: ArrayBuffer[TaskMetrics] = ArrayBuffer.empty
-  val id = ActorNameGenerator.getName(name)
+
+  lazy val id = ActorNameGenerator.getName(name)
 
 
   override def receive: Receive = {
@@ -45,6 +46,17 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
       metricsReport.+=(metrics)
       task.execute(session)
 
+    case GetRunningStats =>
+      sender() ! PipelineStats(id,
+        name,
+        session.className,
+        startTime.getTime,
+        new Date().getTime,
+        metricsReport.toArray,
+        runnableScn.pipelineBuilder.taskBuilders.size,
+        session.validationResults)
+
+
     case PipelineCompleted(finalSession) =>
 
       //Display the tasks stats
@@ -62,7 +74,16 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
 
       //TODO : Change the status based on the failure of the tasks.
       controller ! PipelineComplete(
-        PipelineStats(id, name,finalSession.className, startTime.getTime, new Date().getTime, metricsReport.toArray, session.validationResults), finalSession, pipelineStatus)
+        PipelineStats(id,
+          name,
+          finalSession.className,
+          startTime.getTime,
+          new Date().getTime,
+          metricsReport.toArray,
+          runnableScn.pipelineBuilder.taskBuilders.size,
+          session.validationResults),
+        finalSession,
+        pipelineStatus)
 
 
     case ExecuteWithDelay(next, delay) =>
@@ -76,6 +97,8 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
 object PipelineManager {
 
   case class StartPipelineExecution()
+
+  case object GetRunningStats
 
   case class ExecuteNext(next: Task, session: Session, scheduledTask: Boolean, metrics: TaskMetrics)
 

@@ -30,6 +30,10 @@ object JobDescriptors {
                            startTime : Long,
                            endTime : Long,
                            tasksStats : Array[TaskMetrics],
+                           totalTasks : Int,
                            validationResults : Seq[ValidationResult])
+
+
+  case class JobStats(project : String, scenarioMetrics : Map[String,Seq[PipelineStats]])
 
 }
