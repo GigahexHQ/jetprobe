@@ -14,7 +14,7 @@ params :
 
 pipelines :
   - name : Login
-    className : com.jetprobe.sample.HttpTestSuite
+    className : com.jetprobe.sample.FileSuite
     description : Sample Tests for http
     exitOnFailure : true
 
