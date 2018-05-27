@@ -10,7 +10,8 @@ import com.jetprobe.core.generator.ActorNameGenerator
 import com.jetprobe.core.runner.PipelineManager._
 import com.jetprobe.core.session.Session
 import com.jetprobe.core.structure.{ExecutablePipeline, Scenario}
-import com.jetprobe.core.task
+import com.jetprobe.core.{task, validations}
+
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.FiniteDuration
 
@@ -68,7 +69,7 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
       }
       println("******************************************************************")
       val pipelineStatus = metricsReport.count(_.currentStatus == task.Failed) match {
-        case x if x > 0 => task.Failed
+        case x if x > 0 || session.validationResults.count(_.status == validations.Failed) > 0 => task.Failed
         case _ => Completed
       }
 

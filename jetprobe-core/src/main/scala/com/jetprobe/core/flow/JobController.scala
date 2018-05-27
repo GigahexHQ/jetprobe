@@ -1,6 +1,8 @@
 package com.jetprobe.core.flow
 
+import java.awt.Desktop
 import java.io.File
+import java.net.URI
 
 import akka.actor.{ActorRef, Props}
 import cats.syntax.either._
@@ -23,16 +25,21 @@ import scala.io.Source
   * @author Shad.
   */
 
-class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader] = None, shutDownWhenDone : Boolean = false) extends BaseActor {
+class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta],
+                    classLoader: Option[ClassLoader] = None,
+                    shutDownWhenDone : Boolean = false,
+                    reportOutPath : Option[String] = None) extends BaseActor {
 
   private val jpHome = "JP_HOME"
   private val jpProperty = "jp.home"
+  var failureCount = 0
 
+  var originalSender : ActorRef = _
   val scenarioMetrics : mutable.Map[String,ArrayBuffer[PipelineStats]] = mutable.Map.empty
 
   val clsLoader = classLoader match {
     case Some(x) => x
-    case None => getClass.getClassLoader
+    case None => Thread.currentThread().getContextClassLoader
   }
 
   var envVars: Map[String, Any] = {
@@ -48,6 +55,7 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], cl
   override def receive: Receive = {
 
     case StartJobExecution =>
+      originalSender = sender()
       val scenario = scenarios.dequeue()
       val queueScns = mutable.Queue(scenario.pipelines.map(p => PipelineBuilder(p.name, p.className)))
       val scnExecutor = ScenarioExecutor.buildScenario(scenario.pipelines, clsLoader).map(scn => ScenarioExecutor.props(scenario.name, scn, self))
@@ -70,7 +78,11 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], cl
         val skippedCount = stats.validationResults.count(_.status == validations.Skipped)
         val finalStatus = {
           if (passedCount == stats.validationResults.size) validations.Passed
-          else if (failedCount > 0) validations.Failed
+          else if (failedCount > 0) {
+            failureCount = failureCount + failedCount
+            validations.Failed
+
+          }
           else validations.Skipped
         }
         ValidationReport(stats.name, stats.className, failedCount, passedCount, skippedCount, finalStatus, stats.validationResults)
@@ -87,16 +99,19 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], cl
         new ConsoleReportWriter().write(validationReports)
 
         //HTML Report
-        val htmlReportWriter = envVars.get(jpProperty).map( x => new HtmlReportWriter(envVars,x.toString))
-        val reportPath = envVars.get(HtmlReportWriter.htmlReportPath)
+        for {
+          reportPath <- reportOutPath
+          htmlReport <- envVars.get(jpProperty).map( x => new HtmlReportWriter(envVars,x.toString,reportPath,project))
+        }yield {
+          logger.info("Generating html reports")
+          val reportFile = htmlReport.write(validationReports)
+          if(Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)){
+            Desktop.getDesktop().browse(reportFile.toURI)
+          }
 
-        (htmlReportWriter,reportPath) match {
-          case (Some(htmlWriter),Some(htmlReport)) => htmlWriter.write(validationReports)
-          case _ => logger.warn(s"Html report would be skipped. Missing html report output path property : ${HtmlReportWriter.htmlReportPath}")
         }
+
       }
-
-
 
 
       self ! StopJobExecution(status, "Success")
@@ -105,6 +120,7 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta], cl
     case StopJobExecution(status, message) =>
       logger.info(s"Job completed with status : ${status.toString} and message : ${message}")
       stopChildren
+      originalSender ! status
       context stop self
       if(shutDownWhenDone){
         context.system.terminate().onComplete({
@@ -141,8 +157,10 @@ object JobController {
   def props(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader]): Props =
     Props(new JobController(project,scenarios, classLoader))
 
-  def props(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader],shutDownWhenDone : Boolean): Props =
-    Props(new JobController(project,scenarios, classLoader,shutDownWhenDone))
+  def props(project : String, scenarios: mutable.Queue[ScenarioMeta], classLoader: Option[ClassLoader],
+            shutDownWhenDone : Boolean,
+            reportPath : Option[String]): Props =
+    Props(new JobController(project,scenarios, classLoader,shutDownWhenDone,reportPath))
 
   case object StartJobExecution
 
@@ -161,7 +179,8 @@ object JobController {
       case f if (f.isFile) => Some(Source.fromFile(f).getLines().toSeq.mkString("\n"))
       case f if (!f.isFile) =>
         //check for resource path
-        val fileStream = getClass.getResourceAsStream("/" + path)
+        val classLoader = optClassLoader.getOrElse(getClass.getClassLoader)
+        val fileStream = classLoader.getResourceAsStream(path)
         fileStream match {
           case fs if (fs == null) => None
           case _ =>
