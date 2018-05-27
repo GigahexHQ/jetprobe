@@ -66,7 +66,7 @@ class FileStorage private[jetprobe](path: String) extends Storage with Validatio
   }
 
   def usingFile[T](fn: File => T): T = {
-    fn(new JFile(path))
+    fn(underLyingFile)
   }
 
   def lines(): Iterator[String] = {
@@ -144,3 +144,5 @@ class FilePath(path: String) extends Config[FileStorage] {
     }
   }
 }
+
+
