@@ -15,7 +15,7 @@ class JobControllerParserSpec extends FlatSpec with Matchers{
     val jobMeta = JobController.buildFromConfig(f,None)
 
     assert(jobMeta.isRight)
-    assert(jobMeta.right.get._1.size == 1)
+    assert(jobMeta.right.get._1 == "Awesomeness")
 
     val scn = jobMeta.right.get._2.dequeue()
     assert(scn.pipelines.size == 1)
@@ -38,7 +38,7 @@ class JobControllerParserSpec extends FlatSpec with Matchers{
     val jobMeta = JobController.buildFromConfig("testScn.yml",None)
 
     assert(jobMeta.isRight)
-    assert(jobMeta.right.get._1.size == 1)
+    assert(jobMeta.right.get._2.size == 1)
 
     val scn = jobMeta.right.get._2.dequeue()
     assert(scn.pipelines.size == 1)
