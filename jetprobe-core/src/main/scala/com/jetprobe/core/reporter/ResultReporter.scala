@@ -7,11 +7,11 @@ import com.jetprobe.core.validations.{ValidationResult, ValidationStatus}
 /**
   * @author Shad.
   */
-trait ResultReporter {
+trait ResultReporter[O] {
 
   def report(scenario : String, className : String, results : Seq[ValidationResult]) : Unit = ???
 
-  def write(reports : Seq[ValidationReport]) : Unit = ???
+  def write(reports : Seq[ValidationReport]) : O = ???
 
 }
 

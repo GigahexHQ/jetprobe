@@ -14,19 +14,23 @@ import DefaultConfigs._
 /**
   * @author Shad.
   */
-class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String) extends ResultReporter {
+class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String,
+                       outputPath : String,
+                       project : String) extends ResultReporter[File] {
 
   import HtmlReportWriter._
+  val reportFile = project.replaceAll(" ","-")
 
-  private val defaultCssPaths = Seq( "/static/css/style.css")
+
   private val materialCss = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.css"
+  private val defaultCssPaths = Seq("/static/css/style.css")
 
-  override def write(reports: Seq[ValidationReport]): Unit = {
+  override def write(reports: Seq[ValidationReport]): File = {
 
-    val cssPaths = defaultCssPaths.map{ path =>
+    val cssPaths = Seq(materialCss) ++ defaultCssPaths.map{ path =>
       val modPath = if(Desktop.isDesktopSupported) path.replace("/","\\") else path
       jpInstallPath + modPath
-    } ++ Seq(materialCss)
+    }
     val htmlConf = staticResourceConfig(jpInstallPath)
     val jsPaths = htmlConf.get(jsPathAttr) match {
       case Some(path) => path.toString.split(",").toSeq
@@ -40,17 +44,21 @@ class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String) extends
       body(cls := "dashboard")(
         //TODO take this property from some config
         navigation("Jet Probe", "https://jetprobe.com"),
-        mainBody(docSideBar(reports), statsBar, resultPanel),
+        mainBody(docSideBar(reports,project), statsBar, resultPanel),
         for (js <- jsPaths) yield script(src := js)
       )
 
     )
 
-    val outputPath = config(HtmlReportWriter.htmlReportPath).toString
+    //val outputPath = config(HtmlReportWriter.htmlReportPath).toString
 
-    val pw = new PrintWriter(new File(outputPath))
+    val dir = new File(outputPath)
+    dir.mkdir()
+    val reportFileInstance = new File(outputPath + "/" + reportFile + ".html")
+    val pw = new PrintWriter(reportFile)
     pw.write(htmlContent)
     pw.close
+    reportFileInstance
 
   }
 
@@ -59,6 +67,7 @@ class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String) extends
 object HtmlReportWriter {
 
   val htmlReportPath = "reporter.html.outputPath"
+  var project : String = _
 
   def docHead(title: String, cssPaths: Seq[String], jsPaths: Seq[String]): TypedTag[String] = {
     head(
@@ -91,7 +100,7 @@ object HtmlReportWriter {
   }
 
 
-  private[reporter] def docSideBar(suites: Seq[ValidationReport]): TypedTag[String] = {
+  private[reporter] def docSideBar(suites: Seq[ValidationReport],project : String): TypedTag[String] = {
     def testSuites(status: String, name: String, active : Boolean): TypedTag[String] = {
       val className = if(active) "active" else ""
       li(data.suite := s"${getShortenedName(name)}", cls := className)(
@@ -109,7 +118,7 @@ object HtmlReportWriter {
 
     div(cls := "card col s3", style := "margin-right:20px;")(
       div(cls := "card-content")(
-        span(cls := "card-title")("Test Suites"),
+        span(cls := "card-title")(s"${project} scenario"),
         div(cls := "nav-options")(
           ul(
             for (suiteReport <- allSuites) yield suiteReport
@@ -171,9 +180,9 @@ object HtmlReportWriter {
     val failedFrac = "%.2f".format(report.failedCount / totalTests)
     val skippedFrac = "%.2f".format(report.skippedCount / totalTests)
 
-    def singleStat(testSuite: String, status: String, frtask: String, count: Int): TypedTag[String] = {
+    def singleStat(testSuite: String, status: String, fraction: String, count: Int): TypedTag[String] = {
       div(cls := "col s4 center-align hidden")(
-        div(cls := "stats-container", data.status := status, data.frtask := frtask,
+        div(cls := "stats-container", data.status := status, data.fraction := fraction,
           attr("data-suite-parent") := shortenedName,
           attr("data-stat") := s"${count}")
       )

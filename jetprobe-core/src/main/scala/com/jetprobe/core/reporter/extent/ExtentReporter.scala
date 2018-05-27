@@ -13,7 +13,8 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String]) extends ResultReporter with LazyLogging {
+class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String])
+  extends ResultReporter[ExtentReports] with LazyLogging {
 
   val htmlReporter = new ExtentHtmlReporter(fileName)
   lazy val klov : Option[KlovReporter] = {
@@ -23,7 +24,7 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
 
 
 
-  override def write(reports: Seq[ValidationReport]): Unit = {
+  override def write(reports: Seq[ValidationReport]): ExtentReports = {
     val extent = new ExtentReports()
     klov match {
       case Some(kv) =>
@@ -72,6 +73,7 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
           case Passed => test.pass(s"${result.testName} passed")
           case Skipped => test.skip(s"${result.message}")
           case Failed => test.fail(s"${result.message}")
+          case _ => test.error(s"${result.message}")
         }
 
       }
@@ -82,7 +84,11 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
     if(klov.nonEmpty){
       klov.get.flush()
     }
+
+    extent
   }
+
+
 
 }
 

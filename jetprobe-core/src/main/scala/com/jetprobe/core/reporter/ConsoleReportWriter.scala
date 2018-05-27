@@ -5,7 +5,7 @@ import com.jetprobe.core.validations.{Failed, Passed, Skipped, ValidationResult}
 /**
   * @author Shad.
   */
-class ConsoleReportWriter extends ResultReporter {
+class ConsoleReportWriter extends ResultReporter[Unit] {
 
   override def report(scenario: String, className: String, results: Seq[ValidationResult]): Unit = {
 
