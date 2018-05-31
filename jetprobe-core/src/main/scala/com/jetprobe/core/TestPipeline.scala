@@ -5,6 +5,7 @@ import java.util.function.Consumer
 
 import com.jetprobe.core.structure.{ExecutablePipeline, PipelineBuilder}
 import com.jetprobe.core.validations.{Passed, ValidationResult}
+import com.typesafe.scalalogging.LazyLogging
 import org.json4s.DefaultFormats
 
 import scala.util.{Failure, Success, Try}
@@ -12,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * @author Shad.
   */
-trait TestPipeline extends CoreDsl{
+trait TestPipeline extends CoreDsl with LazyLogging {
 
   implicit val formats = DefaultFormats
 

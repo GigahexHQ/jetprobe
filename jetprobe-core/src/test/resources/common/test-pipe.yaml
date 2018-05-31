@@ -1,0 +1,11 @@
+name : TestScenario
+project : Awesomeness
+tags :
+  - fast
+  - test
+
+pipelines :
+  - name : Testing pipe
+    className : com.jetprobe.sample.TestPipeline
+    description : Run the Match pipeline on Spark
+    exitOnFailure : true

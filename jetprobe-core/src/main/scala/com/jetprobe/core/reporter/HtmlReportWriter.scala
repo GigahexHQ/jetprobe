@@ -55,7 +55,7 @@ class HtmlReportWriter(config: Map[String, Any], jpInstallPath : String,
     val dir = new File(outputPath)
     dir.mkdir()
     val reportFileInstance = new File(outputPath + "/" + reportFile + ".html")
-    val pw = new PrintWriter(reportFile)
+    val pw = new PrintWriter(reportFileInstance)
     pw.write(htmlContent)
     pw.close
     reportFileInstance

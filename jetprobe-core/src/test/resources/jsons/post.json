@@ -1,0 +1,24 @@
+[
+  {
+    "_id": "5b0aefca49b068f5025cfcdd",
+    "index": 0,
+    "guid": "0d87c69c-c14f-450e-a4f2-446cf870a8b4",
+    "isActive": false,
+    "balance": "$3,762.35",
+    "picture": "http://placehold.it/32x32",
+    "age": 20,
+    "eyeColor": "green",
+    "name": "Cruz Gross"
+  },
+  {
+    "_id": "5b0aefca19922c42ed93808e",
+    "index": 1,
+    "guid": "ae35c485-27dc-460e-bc9d-91a271b3dc7e",
+    "isActive": false,
+    "balance": "$1,744.58",
+    "picture": "http://placehold.it/32x32",
+    "age": 24,
+    "eyeColor": "brown",
+    "name": "Kirk Massey"
+  }
+]
