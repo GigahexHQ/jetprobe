@@ -10,6 +10,7 @@ import com.jetprobe.core.validations.{ValidationExecutor, ValidationResult, Vali
 
 import scala.io.Source
 import java.io.{File => JFile}
+import java.nio.file.{Files, Paths}
 
 
 /**
@@ -24,8 +25,13 @@ class FileStorage private[jetprobe](path: String) extends Storage with Validatio
     *
     * @param destination
     */
-  def moveTo(destination: String): Unit = {
-    new File(path).renameTo(new File(destination))
+  def moveTo(destination: String): Boolean = {
+    val renamed = underLyingFile.renameTo(new File(destination))
+    if(renamed){
+      val isDeleted = this.rm
+      isDeleted
+    }
+    else false
   }
 
   /**
@@ -130,9 +136,11 @@ class FileStorage private[jetprobe](path: String) extends Storage with Validatio
     *
     * @return true if success else false
     */
-  def rm: Boolean = new File(path).delete()
-
-
+  def rm: Boolean = if(underLyingFile.exists()) {
+    Files.deleteIfExists(Paths.get(underLyingFile.toURI))
+  }
+    //returning true as the file doesn't exist in the first place.
+  else true
 }
 
 class FilePath(path: String) extends Config[FileStorage] {

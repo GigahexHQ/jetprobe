@@ -10,27 +10,6 @@ import scala.io.Source
   */
 object FileReader {
 
-  /**
-    * Populates the array with the sample data
-    *
-    * @param filePath
-    * @return the dataset
-    */
-  def getDataSet(filePath: String): Array[String] = {
-    val dataset = new ArrayBuffer[String]()
-    val fileResource = getClass.getResource("/" + filePath)
-    val bufferedSource = if (fileResource != null) {
-      val stream = getClass.getResourceAsStream("/" + filePath)
-      Source.fromInputStream(stream)
-    } else
-      Source.fromFile(new File(filePath))
-
-    for (data <- bufferedSource.getLines) {
-      dataset += data
-    }
-    bufferedSource.close
-    dataset.toArray
-  }
 
   /**
     * Read entire file and concat into 1 line

@@ -28,7 +28,7 @@ trait TestPipeline extends CoreDsl with LazyLogging {
     returnedVal match {
       case Success(v) if v == expected => ValidationResult.success()
       case Success(v) if v != expected =>
-        throw new Exception(s"Expression : ${actual.source} at ${fullName.value}:${line.value} evaulate as : ${actual.value}, but expected : ${expected}")
+        throw new Exception(s"Expression : ${actual.source} at ${fullName.value}:${line.value} evaulated as : ${actual.value}, but expected : ${expected}")
       case Failure(ex) =>
         throw new IllegalArgumentException(s"Expression at ${fullName.value}:${line.value} failed to evaluate with exception : ${ex.getMessage}")
     }

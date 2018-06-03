@@ -221,7 +221,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons passed")("check_circle"),
-              s"${vrs.count(_.status == Passed)} Validations for ${testName}"),
+              s"${testName} passed"),
             //details of the test
             div(cls := "collapsible-body")(
               p("All tests passed")
@@ -233,7 +233,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons skipped")("info"),
-              s"${vrs.count(_.status == Skipped)} Validations for ${testName}"),
+              s"${testName} skipped"),
             div(cls := "collapsible-body")(
               for (skippedTest <- vrs.filter(_.status == Skipped)) yield {
                 p(s"${skippedTest.message}")
@@ -246,7 +246,7 @@ object HtmlReportWriter {
           li(attr("data-suite-panel") := shortenedName)(
             div(cls := "collapsible-header")(
               i(cls := "material-icons failed")("cancel"),
-              s"${vrs.count(_.status == Failed)} Validations for ${testName}"),
+              s"${testName} failed"),
             div(cls := "collapsible-body")(
               for (failedTest <- vrs.filter(_.status == Failed)) yield {
                 p(s"${failedTest.message}")

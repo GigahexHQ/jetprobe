@@ -13,9 +13,9 @@ class DirectoryStorage private[jetprobe](path: String) extends Storage with Vali
 
   val underlyingDir = new JFile(path)
 
-  def delete : Boolean = underlyingDir.delete()
+  def rm(recursive : Boolean = false) : Boolean = underlyingDir.delete()
 
-  def create : Boolean = underlyingDir.mkdir()
+  def mkdir : Boolean = underlyingDir.mkdir()
 
   def hasTotalFiles(fileCount : Int) : ValidationResult = {
     assertThat[JFile,Int](fileCount,underlyingDir)(dir => dir.listFiles().count(_.isFile))

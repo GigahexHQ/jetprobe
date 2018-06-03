@@ -18,8 +18,13 @@ trait ValidationExecutor[D <: DataSource] {
     val returnedVal = Try(actual.apply(target))
     val callStack = Thread.currentThread().getStackTrace.toList.find { elem =>
       val className = elem.getClassName
-      Class.forName(className).isAnnotationPresent(classOf[PipelineMeta])
-    }.get
+      try{
+        Class.forName(className).isAnnotationPresent(classOf[PipelineMeta])
+      }catch {
+        case e : ClassNotFoundException => false
+      }
+
+    }.getOrElse(new StackTraceElement("com.jetprobe.Test","test","test.scala",10))
 
 
     returnedVal match {
