@@ -19,7 +19,7 @@ class FileStorageSpec extends FlatSpec with Matchers {
 
     val fileStorage = filePath.getStorage(config)
     var storagePath = fileStorage.underLyingFile.getAbsoluteFile.getPath
-    if (System.getenv("os").toLowerCase().contains("windows")) {
+    if (isWindows()) {
       storagePath = "/" + storagePath.replaceAll("\\\\", "/")
     }
 
@@ -29,7 +29,7 @@ class FileStorageSpec extends FlatSpec with Matchers {
   it should "move the file" in {
     val fp = getClass.getResource("/fs/movable.in")
     var incPath = "/moved.in"
-    if (System.getenv("os").toLowerCase().contains("windows")) {
+    if (isWindows()) {
       incPath = """\moved.in"""
     }
     val newPath = new File(fp.getPath).getParent + incPath
@@ -50,6 +50,14 @@ class FileStorageSpec extends FlatSpec with Matchers {
     f.hasTotalLines(5).status shouldEqual(Passed)
     f.hasLines(_.equals("5")).status shouldEqual(Passed)
     f.hasLines(1)(_.equals("2")).status shouldEqual(Passed)
+  }
+
+
+  def isWindows() : Boolean = {
+    System.getenv("os") match {
+      case x if x == null => false
+      case x  => x.toLowerCase().contains("windows")
+    }
   }
 
 }
