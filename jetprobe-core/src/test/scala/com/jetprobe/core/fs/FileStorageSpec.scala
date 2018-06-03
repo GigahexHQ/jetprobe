@@ -10,10 +10,6 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class FileStorageSpec extends FlatSpec with Matchers {
 
-  override def beforeAll() = {
-
-  }
-
   behavior of "File Storage"
 
   it should "parse the file path" in {
