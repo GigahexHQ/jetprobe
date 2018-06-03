@@ -23,7 +23,7 @@ class ValidationBuilder[S <: Storage](val description: String, storeConfig: Conf
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
     val taskMeta = TaskMeta(description, ValidationTask)
     new SelfExecutableTask(taskMeta, ValidationMessage(storeConfig, rulesBuilder, description), next, ctx.system, ctx.controller)(runValidator)
   }
@@ -56,7 +56,7 @@ class BasicValidationBuilder(val description: String, fnTest: () => Any) extends
 
   case class ValidationInput(fnTest: () => Any, name: String) extends TaskMessage
 
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     val message = ValidationInput(fnTest, description)
     val tmeta = TaskMeta(description, ValidationTask)
@@ -90,7 +90,7 @@ class BasicValidationBuilder(val description: String, fnTest: () => Any) extends
 
 class RegisterValidation[S <: Storage](val description: String, storeConfig: Config[S], fnTest: S => Any) extends TaskBuilder {
 
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     val message = ValidateStorage(storeConfig, fnTest, description)
     val tmeta = TaskMeta(description, ValidationTask)
@@ -130,7 +130,7 @@ class RegisterValidation[S <: Storage](val description: String, storeConfig: Con
 
 class PropertyValidation[D](val description: String, val property: D, val fn: D => Any) extends TaskBuilder {
 
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
     val taskMeta = TaskMeta(description, ValidationTask)
     new SelfExecutableTask(taskMeta, ValidationRequest(this), next, ctx.system, ctx.controller)(runValidation)
   }

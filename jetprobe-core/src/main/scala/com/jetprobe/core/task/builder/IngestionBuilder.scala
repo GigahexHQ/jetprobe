@@ -31,7 +31,7 @@ class IngestionBuilder(val description : String, datasetGen : DataGenerator, wri
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     val msg = IngestTaskMessage(datasetGen)
     val taskMeta = TaskMeta(description,IngestionTask)
@@ -58,7 +58,7 @@ class StorageIOBuilder[S <: Storage](val description : String,datasetGen : DataG
 
   }
 
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     val taskMeta = TaskMeta(name,StorageIOTask)
     new SelfExecutableTask(taskMeta,this,next,ctx.system,ctx.controller)(handleIngest)

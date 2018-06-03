@@ -21,7 +21,7 @@ class RunCommandBuilder(val description : String,command: String, at: String) ex
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
     val message = RunCommandMessage(command, at)
     val taskMeta = TaskMeta(description,LocalCommandTask)
     new SelfExecutableTask(taskMeta, message, next, ctx.system, ctx.controller)(handleMessage)

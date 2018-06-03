@@ -34,7 +34,7 @@ class SSHTaskBuilder(val description: String, fnShellTask: SecuredClient => Unit
     * @return the resulting task
     */
 
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
     val sshMessage = SSHMessage(fnShellTask, sSHConfig, next)
 
 
@@ -152,7 +152,7 @@ object SSHTaskBuilder {
 }
 
 
-case class SSHMessage(fnShellTask: SecuredClient => Unit, sshConfig: SSHConfig, next: Task) extends TaskMessage {
+case class SSHMessage(fnShellTask: SecuredClient => Unit, sshConfig: SSHConfig, next: ExecutableTask) extends TaskMessage {
 
   override def name: String = s"SSH Tasks at host : ${sshConfig.hostName}"
 }

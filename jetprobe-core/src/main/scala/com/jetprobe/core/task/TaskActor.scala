@@ -11,7 +11,7 @@ import scala.util.{Failure, Success, Try}
   */
 abstract class TaskActor extends BaseActor {
 
-  def next: Task
+  def next: ExecutableTask
 
   override def receive: Receive = {
 
@@ -37,7 +37,7 @@ abstract class TaskActor extends BaseActor {
     }
 }
 
-abstract class TaskBackedActor(next : Task,controller : ActorRef) extends BaseActor {
+abstract class TaskBackedActor(next : ExecutableTask, controller : ActorRef) extends BaseActor {
 
   override def receive: Receive = {
 

@@ -23,7 +23,7 @@ class HttpRequestTaskBuilder(val description : String, requestBuilder : HttpRequ
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     new SelfExecutableTask(taskMeta,HttpRequestMessage(requestBuilder),next,ctx.system,ctx.controller)(handleHttp)
   }

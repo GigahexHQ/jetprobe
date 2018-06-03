@@ -1,7 +1,7 @@
 package com.jetprobe.core.structure
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.jetprobe.core.task.Task
+import com.jetprobe.core.task.ExecutableTask
 import com.jetprobe.core.task.builder.TaskBuilder
 
 /**
@@ -18,7 +18,7 @@ case class PipelineBuilder(name: String,
   def build(): ExecutablePipeline = ExecutablePipeline(this, this.cls)
 
   private[jetprobe] def build(ctx: PipelineContext,
-                              chainNext: Task): Task = {
+                              chainNext: ExecutableTask): ExecutableTask = {
     taskBuilders.foldLeft(chainNext) { (next, taskBuilder) =>
       taskBuilder.build(ctx, next)
     }
@@ -29,7 +29,7 @@ case class PipelineBuilder(name: String,
 case class ExecutablePipeline(pipelineBuilder: PipelineBuilder, className: String, config: Map[String, Any] = Map.empty) {
 
   def build(system: ActorSystem,
-            onExit: Task,
+            onExit: ExecutableTask,
             controller: ActorRef): Scenario = {
     val ctx = PipelineContext(system, controller)
     val entry = pipelineBuilder.build(ctx, onExit)

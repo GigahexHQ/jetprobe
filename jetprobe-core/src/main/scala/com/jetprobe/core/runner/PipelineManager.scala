@@ -101,9 +101,9 @@ object PipelineManager {
 
   case object GetRunningStats
 
-  case class ExecuteNext(next: Task, session: Session, scheduledTask: Boolean, metrics: TaskMetrics)
+  case class ExecuteNext(next: ExecutableTask, session: Session, scheduledTask: Boolean, metrics: TaskMetrics)
 
-  case class ExecuteWithDelay(next: Task, duration: FiniteDuration)
+  case class ExecuteWithDelay(next: ExecutableTask, duration: FiniteDuration)
 
   case class UpdatePipelineEnvVars(envVars: Map[String, Any], eventSource: EventSource)
 

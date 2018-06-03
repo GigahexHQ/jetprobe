@@ -11,7 +11,7 @@ import com.jetprobe.core.session.{Session, UserMessage}
   */
 
 case object ExitTask extends TaskType
-class Exit(controller: ActorRef) extends Task {
+class Exit(controller: ActorRef) extends ExecutableTask {
 
 
 

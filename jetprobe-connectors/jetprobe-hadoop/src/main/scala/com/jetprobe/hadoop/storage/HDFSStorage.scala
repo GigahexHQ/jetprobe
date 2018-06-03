@@ -5,6 +5,8 @@ import java.net.URI
 import com.jetprobe.core.parser.{Expr, ExpressionParser}
 import com.jetprobe.core.storage.Storage
 import com.jetprobe.core.structure.Config
+import com.jetprobe.core.validations.ValidationExecutor
+import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ContentSummary, FileSystem, Path}
 
@@ -12,9 +14,11 @@ import org.apache.hadoop.fs.{ContentSummary, FileSystem, Path}
   * @author Shad.
   */
 
-class HDFSStorage private[jetprobe](val conf: Configuration, val hadoopUserName: String, val fs: FileSystem) extends Storage {
+class HDFSStorage private[jetprobe](val conf: Configuration, val hadoopUserName: String, val fs: FileSystem)
+  extends Storage{
 
   implicit def toPath(path : String) : Path = new Path(path)
+
 
   val batch = 10000
   def getFileSystem: FileSystem = {
@@ -41,6 +45,15 @@ class HDFSStorage private[jetprobe](val conf: Configuration, val hadoopUserName:
     fs.close()
 
   }
+
+  def readLines(path : String) : Iterator[String] = {
+    init(path)
+    val input = fs.open(path)
+    IOUtils.toString(input).split("\n").toIterator
+  }
+
+  def file(path : String) : HDFSPath = HDFSPath(path,this)
+
 
   /**
     * Directory path to create

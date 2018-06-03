@@ -1,6 +1,6 @@
 package com.jetprobe.core.structure
 
-import com.jetprobe.core.task.Task
+import com.jetprobe.core.task.ExecutableTask
 import com.jetprobe.core.http.HttpDSL
 
 /**
@@ -16,7 +16,7 @@ trait StructureBuilder[B <: StructureBuilder[B]]
     with LocalCommands[B] {
 
   private[jetprobe] def build(ctx: PipelineContext,
-                              chainNext: Task): Task = {
+                              chainNext: ExecutableTask): ExecutableTask = {
     taskBuilders.foldLeft(chainNext) { (next, taskBuilder) =>
       taskBuilder.build(ctx, next)
     }

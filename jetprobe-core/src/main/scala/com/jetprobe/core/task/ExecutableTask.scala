@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 /**
   * Defines the task that gets executed
   */
-trait Task extends StrictLogging {
+trait ExecutableTask extends StrictLogging {
 
   val meta : TaskMeta
 
@@ -52,22 +52,22 @@ case class TaskMetrics(startTime : Long, endTime : Long, currentStatus : RunStat
 
 case class ForwardedMessage(message: TaskMessage, session: Session, task : TaskMeta)
 
-class SelfExecutableTask(val meta : TaskMeta, val message: TaskMessage, next: Task, actorSystem: ActorSystem,scenarioManager: ActorRef)
-                  (fn: (TaskMessage, Session) => Session) extends Task {
+class SelfExecutableTask(val meta : TaskMeta, val message: TaskMessage, next: ExecutableTask, actorSystem: ActorSystem, scenarioManager: ActorRef)
+                  (fn: (TaskMessage, Session) => Session) extends ExecutableTask {
 
   override def execute(session: Session): Unit = {
     val msg = ForwardedMessage(message, session,meta)
 
     val taskActorRef = actorSystem.actorOf(SelfExecutableTask.props(next,scenarioManager,fn), meta.tId)
     taskActorRef ! msg
-    
+
   }
 
 }
 
 object SelfExecutableTask {
 
-  def props(next : Task, scenarioManager : ActorRef, fn : (TaskMessage, Session) => Session) : Props = Props(new TaskBackedActor(next,scenarioManager) {
+  def props(next : ExecutableTask, scenarioManager : ActorRef, fn : (TaskMessage, Session) => Session) : Props = Props(new TaskBackedActor(next,scenarioManager) {
 
     override def execute(taskMessage: TaskMessage, session: Session): Session = {
       //try{

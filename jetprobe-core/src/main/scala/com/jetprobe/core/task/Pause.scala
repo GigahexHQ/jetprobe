@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 
 case object PauseTask extends TaskType
 
-class Pause(val description : String, duration: FiniteDuration, next: Task, actorSystem: ActorSystem, scenarioController: ActorRef) extends Task {
+class Pause(val description : String, duration: FiniteDuration, next: ExecutableTask, actorSystem: ActorSystem, scenarioController: ActorRef) extends ExecutableTask {
 
   import actorSystem.dispatcher
 

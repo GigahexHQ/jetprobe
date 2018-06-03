@@ -18,7 +18,7 @@ class RunnableTaskBuilder[T <: Storage](val description : String, storageConf: C
     * @param next the task that will be chained with the Task build by this builder
     * @return the resulting task
     */
-  override def build(ctx: PipelineContext, next: Task): Task = {
+  override def build(ctx: PipelineContext, next: ExecutableTask): ExecutableTask = {
 
     val runnableMessage = RunnableTaskMessage(storageConf, handler)
 
