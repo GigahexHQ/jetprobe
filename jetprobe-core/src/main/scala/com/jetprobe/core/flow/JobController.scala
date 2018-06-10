@@ -47,7 +47,7 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta],
       Map(jpProperty -> System.getenv(jpHome))
     }
     else {
-      logger.warn(s"Environment variable ${jpHome} is not set.")
+      warn(s"Environment variable ${jpHome} is not set.")
       Map.empty
     }
   }
@@ -93,7 +93,7 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta],
         val klovReporter = envVars.get(ExtentReporter.propReportName).flatMap(_ => ExtentReporter.build(name,envVars))
         klovReporter match {
           case Some(klv) => klv.write(validationReports)
-          case None => logger.warn("Klov Reporter config not found.")
+          case None => warn("Klov Reporter config not found.")
         }
 
         new ConsoleReportWriter().write(validationReports)
@@ -118,14 +118,19 @@ class JobController(project : String, scenarios: mutable.Queue[ScenarioMeta],
 
 
     case StopJobExecution(status, message) =>
-      logger.info(s"Job completed with status : ${status.toString} and message : ${message}")
+      status match {
+        case Completed => info("All tests pipelines completed.")
+        case Skipped => warn(s"Some test pipelines were skipped with message : ${message}")
+        case Failed => error(s"Tests Pipeline failed with exception : ${message}")
+      }
+
       stopChildren
       originalSender ! status
       context stop self
       if(shutDownWhenDone){
         context.system.terminate().onComplete({
           case _ =>
-            logger.info("Actor system shutdown")
+            info("Actor system shutdown")
           //System.exit(0)
         })
       }

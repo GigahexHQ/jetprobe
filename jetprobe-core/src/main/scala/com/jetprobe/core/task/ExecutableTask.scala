@@ -37,9 +37,7 @@ trait TaskMessage {
 trait TaskType
 
 sealed trait RunStatus
-case object NotStarted extends RunStatus {
-
-}
+case object NotStarted extends RunStatus
 case object Running extends RunStatus
 case object Completed extends RunStatus {
   override def toString: String = "Completed"

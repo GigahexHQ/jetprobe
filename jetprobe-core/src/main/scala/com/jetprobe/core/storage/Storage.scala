@@ -5,6 +5,8 @@ import com.jetprobe.core.generator.Generator
 import com.jetprobe.core.validations.ValidationRule
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.mutable
+
 /**
   * @author Shad.
   */
@@ -14,6 +16,24 @@ trait Storage extends LazyLogging with DataSource {
 
 
   def cleanup : Unit = logger.info("Cleaning up resources")
+
+  def isExpr(str : String) : Boolean = {
+
+    val stck = new mutable.Stack[Char]()
+    for {
+      i <- str.indices
+
+    } yield {
+      val ch = str.charAt(i)
+      if(ch.equals('$') || ch.equals('{'))
+        stck.push(ch)
+      else if(ch.equals('}') && stck.nonEmpty && stck.size != 1){
+        stck.pop()
+      }
+    }
+
+    (stck.nonEmpty && stck.size == 1 && stck.pop().equals('$'))
+  }
 
 
 }

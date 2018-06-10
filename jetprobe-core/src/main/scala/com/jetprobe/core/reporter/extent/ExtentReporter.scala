@@ -7,6 +7,7 @@ import com.aventstack.extentreports.reporter.{ExtentHtmlReporter, KlovReporter}
 import com.jetprobe.core.reporter.{ResultReporter, ValidationReport}
 import com.jetprobe.core.validations.{Failed, Passed, Skipped}
 import com.typesafe.scalalogging.LazyLogging
+import wvlet.log.LogSupport
 
 import scala.util.{Failure, Success, Try}
 
@@ -14,7 +15,7 @@ import scala.util.{Failure, Success, Try}
   * @author Shad.
   */
 class ExtentReporter(fileName: String,project : String, reportName : String, mongoHost : Option[String])
-  extends ResultReporter[ExtentReports] with LazyLogging {
+  extends ResultReporter[ExtentReports] {
 
   val htmlReporter = new ExtentHtmlReporter(fileName)
   lazy val klov : Option[KlovReporter] = {
@@ -92,7 +93,8 @@ class ExtentReporter(fileName: String,project : String, reportName : String, mon
 
 }
 
-object ExtentReporter extends LazyLogging{
+object ExtentReporter extends LogSupport {
+
 
   val propProjectName = "reporter.extent.project"
   val propFileName = "reporter.extent.fileName"
@@ -111,7 +113,7 @@ object ExtentReporter extends LazyLogging{
     reporter match {
       case Success((projectName,fileName,mongoHost,reportName)) => Some(new ExtentReporter(fileName,projectName,reportName,mongoHost))
       case Failure(exception) =>
-        logger.warn(s"Extent reporter missing fields : ${exception.getMessage}")
+        warn(s"Extent reporter missing fields : ${exception.getMessage}")
         None
     }
   }

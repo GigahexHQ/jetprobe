@@ -42,7 +42,12 @@ class PipelineManager(runnableScn: ExecutablePipeline, controller: ActorRef, nam
       if (!isScheduled) {
         context stop (sender())
       }
-      session = newSession
+
+      session = session.copy(
+        attributes = session.attributes ++ newSession.attributes,
+        tasks = newSession.tasks ++ session.tasks ,
+        validationResults = session.validationResults ++ newSession.validationResults distinct
+      )
       controller ! UpdateScnEnvVariables(session.attributes, FromPipelineManager)
       metricsReport.+=(metrics)
       task.execute(session)

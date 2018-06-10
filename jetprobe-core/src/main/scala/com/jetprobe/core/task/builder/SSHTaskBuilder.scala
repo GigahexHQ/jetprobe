@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import com.jetprobe.core.parser.ExpressionParser
 import com.jetprobe.core.task._
 import com.jetprobe.core.structure.PipelineContext
-import com.jetprobe.core.task.builder.SSHTaskBuilder.{RemoteExec, SSHTaskDef, UploadTask}
+import com.jetprobe.core.task.builder.SSHTaskBuilder._
 import com.typesafe.scalalogging.LazyLogging
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -52,13 +52,15 @@ class SSHTaskBuilder(val description: String, fnShellTask: SecuredClient => Unit
             val sc = new SecuredClient(sshClient, ctx.system)
             fnTask(sc)
             val taskQueue = sc.remoteTasks
-            while(taskQueue.nonEmpty){
-              taskQueue.dequeue().exec(sess.attributes)
+            var attributes = sess.attributes
+            var updatedSession = sess
+            while (taskQueue.nonEmpty) {
+              val taskAttr = taskQueue.dequeue().exec(updatedSession.attributes)
+              attributes = taskAttr ++ attributes
+              updatedSession = sess.copy(attributes = attributes)
             }
+            updatedSession
           } finally sshClient.disconnect
-
-          //return the same session
-          sess
 
       }
     }
@@ -69,36 +71,43 @@ class SSHTaskBuilder(val description: String, fnShellTask: SecuredClient => Unit
 }
 
 object SSHTaskBuilder {
-  type HandleOp = String => Unit
+  type HandleOp = String => Map[String, Any]
+
   import ExpressionParser._
 
-  sealed trait SSHTaskDef extends LazyLogging{
+  sealed trait SSHTaskDef extends LazyLogging {
 
 
-    private[task] def exec(config: Map[String, Any]): Unit
+    private[task] def exec(config: Map[String, Any]): Map[String, Any]
 
+  }
+
+  val defaultHandler: HandleOp = (s: String) => {
+    println(s)
+    Map.empty
   }
 
   /**
     * Remote Command Task builder
+    *
     * @param cmd
     * @param streamHandler
     * @param ssh
     */
-  case class RemoteExec(cmd: String, var streamHandler: HandleOp = println(_), ssh: SSHClient) extends SSHTaskDef {
+  class RemoteExec(cmd: String, var streamHandler: HandleOp = defaultHandler, ssh: SSHClient) extends SSHTaskDef {
 
     def consume(handler: HandleOp) = streamHandler = handler
 
-    override private[task] def exec(config: Map[String, Any]): Unit = {
+    override private[task] def exec(config: Map[String, Any]): Map[String, Any] = {
       ExpressionParser.parse(cmd, config) match {
-        case Some(cmdVal) => executeCmd(cmdVal,streamHandler)
+        case Some(cmdVal) => executeCmd(cmdVal, streamHandler)
       }
     }
 
-    private def executeCmd(cmd: String, streamHandler: HandleOp) : Unit = {
+    private def executeCmd(cmd: String, streamHandler: HandleOp): Map[String, Any] = {
       val session = ssh.startSession
       try {
-        val strippedCmdStr = cmd.replaceAll("\r", "").replaceAll("\n", " ")
+        val strippedCmdStr = cmd.stripMargin.replaceAll("\n", " ").replaceAll("\r", "")
         val run = session.exec(strippedCmdStr)
 
         val errorStream = new StreamLog(run.getErrorStream, streamHandler)
@@ -108,18 +117,27 @@ object SSHTaskBuilder {
 
         errorStream.join(Long.MaxValue)
         infoStream.join(Long.MaxValue)
+        logger.info(s"exit status : ${run.getExitStatus}")
+
+        if (run.getExitStatus != 0) {
+          throw new Exception(s"cmd : ${strippedCmdStr} failed.")
+        }
+
+        errorStream.properties ++ infoStream.properties
 
       } finally session.close
     }
   }
 
-  case class UploadTask(from : String, remotePath : String,ssh: SSHClient) extends SSHTaskDef {
+  case class UploadTask(from: String, remotePath: String, ssh: SSHClient) extends SSHTaskDef {
 
-    override private[task] def exec(config: Map[String, Any]): Unit = {
-      (parse(from,config),parse(remotePath,config)) match {
-        case (Some(fromPath),Some(toPath)) =>
-          try
+    override private[task] def exec(config: Map[String, Any]): Map[String, Any] = {
+      (parse(from, config), parse(remotePath, config)) match {
+        case (Some(fromPath), Some(toPath)) =>
+          try {
             ssh.newSCPFileTransfer.upload(new FileSystemFile(fromPath), toPath)
+            Map.empty
+          }
           catch {
             case e: Exception =>
               logger.error(s"Exception occurred while uploading task : ${e.getMessage}")
@@ -132,21 +150,19 @@ object SSHTaskBuilder {
 
   }
 
-  case class DownloadTask(from: String, target: String,ssh: SSHClient) extends SSHTaskDef {
+  case class DownloadTask(from: String, target: String, ssh: SSHClient) extends SSHTaskDef {
 
-    override private[task] def exec(config: Map[String, Any]): Unit = {
+    override private[task] def exec(config: Map[String, Any]): Map[String, Any] = {
 
-      (parse(from,config),parse(target,config)) match {
-        case (Some(fromPath),Some(toPath)) =>
+      (parse(from, config), parse(target, config)) match {
+        case (Some(fromPath), Some(toPath)) =>
+          ssh.newSCPFileTransfer.download(fromPath, new FileSystemFile(toPath))
+          Map.empty
       }
 
     }
 
   }
-
-
-
-
 
 
 }
@@ -169,58 +185,41 @@ class SecuredClient(ssh: SSHClient, actorSystem: ActorSystem) extends LazyLoggin
   import SecuredClient._
 
   def run(cmd: String): RemoteExec = {
-    val rt = RemoteExec(cmd, ssh = ssh)
+    val rt = new RemoteExec(cmd, ssh = ssh)
     remoteTasks.enqueue(rt)
     rt
   }
 
 
-  def run(cmd: String, fnStreamHandler: String => Unit = println(_)): Unit = {
-
-    val session = ssh.startSession
-    try {
-      val strippedCmdStr = cmd.replaceAll("\r", "").replaceAll("\n", " ")
-      val run = session.exec(strippedCmdStr)
-
-      val errorStream = new StreamLog(run.getErrorStream, fnStreamHandler)
-      val infoStream = new StreamLog(run.getInputStream, fnStreamHandler)
-      errorStream.start()
-      infoStream.start()
-
-      errorStream.join(Long.MaxValue)
-      infoStream.join(Long.MaxValue)
-
-    } finally session.close
-
-
-  }
-
   def download(from: String, target: String): Unit = {
 
-    try
-      ssh.newSCPFileTransfer.download(from, new FileSystemFile(target))
-    catch {
-      case e: Exception => e.printStackTrace()
-    }
+    val downloadTask = DownloadTask(from, target, ssh)
+    remoteTasks.enqueue(downloadTask)
 
   }
 
   def upload(src: String, target: String): Unit = {
 
-    val uploadTask = UploadTask(src,target,ssh)
+    val uploadTask = UploadTask(src, target, ssh)
     remoteTasks.enqueue(uploadTask)
 
   }
 
 }
 
-class StreamLog(stream: InputStream, opHandler: String => Unit) extends Thread {
+class StreamLog(stream: InputStream, opHandler: HandleOp) extends Thread {
+
+  var properties: Map[String, Any] = Map.empty
 
   override def run(): Unit = {
     val scanner = new Scanner(stream, "UTF-8").useDelimiter("\n")
     val streamReader = new InputStreamReader(stream)
     while (scanner.hasNext) {
-      opHandler(scanner.next())
+      val parsedProp = opHandler(scanner.next())
+      if(parsedProp.nonEmpty){
+        properties = properties ++ parsedProp
+      }
+
     }
     scanner.close()
   }

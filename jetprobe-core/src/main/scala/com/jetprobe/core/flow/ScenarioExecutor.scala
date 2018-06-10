@@ -98,7 +98,7 @@ object ScenarioExecutor {
     }
 
     execPipes.count(opt => opt.isLeft) > 0 match {
-      case true => Left(new Exception("Failed to create instance of Pipelines"))
+      case true => Left(execPipes.takeWhile(_.isLeft).head.left.get)
       case false =>
         val pipelineQueue : mutable.Queue[ExecutablePipeline] = mutable.Queue.empty
         pipelineQueue ++= execPipes.flatMap(_.right.get)
@@ -107,7 +107,11 @@ object ScenarioExecutor {
   }
 
   private def buildPipe(pipeDef: Pipeline, classLoader: ClassLoader): Either[Throwable, Array[ExecutablePipeline]] = {
-    val pipeBuilder = Try(classLoader.loadClass(pipeDef.className))
+    val pipeBuilder = Try(classLoader.loadClass(pipeDef.className)) match {
+      case Success(cls) => Success(cls)
+      case Failure(ex) => Failure(new Exception(s"Unable to find the class : ${ex.getMessage}"))
+    }
+
     val result = pipeBuilder.map { cls =>
 
       val isAbstract = Modifier.isAbstract(cls.getModifiers)

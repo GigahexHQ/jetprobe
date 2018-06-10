@@ -14,6 +14,7 @@ object Dependencies {
   private val scopt = "com.github.scopt" %% "scopt" % "3.5.0"
   private val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0"
   private val csvReader = "com.github.tototoshi" %% "scala-csv" % "1.3.4"
+  private val airframeLog = "org.wvlet.airframe" %% "airframe-log" % "0.49"
 
   private val json4s = "org.json4s" %% "json4s-native" % "3.5.2"
   private val json4sJackson = "org.json4s" %% "json4s-jackson" % "3.5.2"
@@ -29,6 +30,7 @@ object Dependencies {
   private val scalatags = "com.lihaoyi" %% "scalatags" % "0.6.7"
   private val sshLib = "com.hierynomus" % "sshj" % "0.23.0"
   private val fastParse = "com.lihaoyi" %% "fastparse" % "1.0.0"
+  private val slf4jJdk = "org.slf4j" % "slf4j-jdk14" % "1.7.23"
 
   private val junit = "junit" % "junit" % "4.12"
 
@@ -116,12 +118,13 @@ object Dependencies {
     sourceCode,
     scalatags,
     ahc,
+    airframeLog,
     akkaActor,
     akkaSlf4j,
+    slf4jJdk,
     scopt,
     scalaLogging,
     csvReader,
-    slf4jLog4j,
     mongoScala,
     json4s,
     json4sJackson,
