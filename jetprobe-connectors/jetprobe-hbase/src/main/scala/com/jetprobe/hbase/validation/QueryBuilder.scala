@@ -34,8 +34,10 @@ object HBaseQueryBuilder {
 
     }
 
+
     filter match {
       case Some(f) => scan.setFilter(f)
+
       case None =>
         scan.setBatch(selectStmt.projections.size)
         scan

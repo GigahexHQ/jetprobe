@@ -1,8 +1,9 @@
 package com.jetprobe.hbase.storage
 
+import com.jetprobe.core.parser.Expr
 import com.jetprobe.core.storage.{DataSource, Storage}
 import com.jetprobe.core.structure.Config
-import com.jetprobe.hbase.validation.HBaseConditionalQueries
+import com.jetprobe.hbase.validation.{HBaseConditionalQueries, TableValidator}
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.client.{Admin, Connection, ConnectionFactory, Put}
 
@@ -109,6 +110,7 @@ class HBaseStorage private[jetprobe](conf: Map[String, String], table: Option[Ta
   }
 
 }
+
 
 class HBaseConfig(conf: Map[String, String]) extends Config[HBaseStorage] {
 
